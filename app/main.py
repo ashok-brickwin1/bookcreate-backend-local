@@ -43,7 +43,11 @@ origins = [
     "http://localhost:5173",  # React dev server (Vite default)
     "http://127.0.0.1:5173",
     "http://localhost:8080",
-    "http://localhost:8081"
+    "http://localhost:8081",
+    "https://ecwriter.educatedapp.com",
+    "https://ecwriterapi.educatedapp.com",
+    "https://ecwriter.educatedapp.com/"
+
 ]
 app.add_middleware(
     CORSMiddleware,
