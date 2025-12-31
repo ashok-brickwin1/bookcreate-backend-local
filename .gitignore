@@ -1,0 +1,86 @@
+# -------------------
+# Python
+# -------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+*.egg
+*.log*
+
+# Byte-compiled / optimized / DLL files
+*.so
+*.dll
+*.dylib
+
+# Virtual environments
+.venv/
+.venv/*
+.env
+.env.local
+.env.*.local
+
+# -------------------
+# FastAPI / Uvicorn
+# -------------------
+*.db
+*.sqlite3
+instance/
+*.pid
+
+# -------------------
+# Testing
+# -------------------
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+Test/
+
+# -------------------
+# IDE / Editor
+# -------------------
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# -------------------
+# Project-specific
+# -------------------
+# Uploaded user files
+uploads/
+scraped_data/
+
+# Cache or temporary files
+.cache/
+*.tmp
+*.bak
+
+# Build / Dist
+build/
+dist/
+*.spec
+
+# -------------------
+# Docker
+# -------------------
+*.pid
+*.seed
+*.pid.lock
+
+# Ignore docker-compose override files
+docker-compose.override.yml
+
+# Alembic versions
+alembic/versions/*
+app/api/v1/test.py
+research/*
