@@ -32,7 +32,7 @@ class VisionQuestionTypeOut(VisionQuestionTypeBase):
 class VisionQuestionBase(BaseModel):
     text: str
     vision_type_id: UUID
-    vision_type_title: str
+    
 
 
 class VisionQuestionCreate(VisionQuestionBase):
@@ -46,6 +46,16 @@ class VisionQuestionUpdate(BaseModel):
 
 class VisionQuestionOut(VisionQuestionBase):
     id: UUID
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class VisionQuestionOutList(VisionQuestionBase):
+    id: UUID
+    vision_type_title:str
     created_at: datetime
     updated_at: datetime
 

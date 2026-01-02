@@ -15,7 +15,13 @@ from app.schemas.vision import (
     VisionQuestionCreate,
     VisionQuestionUpdate,
     VisionQuestionOut,
+    VisionQuestionOutList
 )
+
+import logging
+
+# root logger
+logger = logging.getLogger()
 
 router = APIRouter()
 
@@ -24,6 +30,7 @@ router = APIRouter()
 def create_vision_question_type(
     payload: VisionQuestionTypeCreate, db: Session = Depends(get_db)
 ):
+    logger.info(f"vision type create called with payload:{VisionQuestionTypeCreate}")
     item = VisionQuestionType(**payload.model_dump())
     db.add(item)
     db.commit()
@@ -61,6 +68,7 @@ def update_vision_question_type(
 
 @router.delete("/type/delete/{type_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_vision_question_type(type_id: UUID, db: Session = Depends(get_db)):
+    logger.info("type delete called")
     item = db.query(VisionQuestionType).filter(
         VisionQuestionType.id == type_id
     ).first()
@@ -81,6 +89,7 @@ def create_vision_question(
     payload: VisionQuestionCreate, db: Session = Depends(get_db)
 ):
     # FK validation
+    logger.info(f"question create called with payload:{VisionQuestionCreate}")
     if not db.query(VisionQuestionType).filter(
         VisionQuestionType.id == payload.vision_type_id
     ).first():
@@ -90,10 +99,11 @@ def create_vision_question(
     db.add(question)
     db.commit()
     db.refresh(question)
+    logger.info("vision question created successfully")
     return question
 
 
-@router.get("/question/list", response_model=list[VisionQuestionOut])
+@router.get("/question/list", response_model=list[VisionQuestionOutList])
 def list_vision_questions(db: Session = Depends(get_db)):
     questions = (
         db.query(VisionQuestion)
