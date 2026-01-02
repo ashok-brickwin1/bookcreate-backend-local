@@ -171,10 +171,19 @@ def generate_outline_copy(figure_name, research_files, no_of_chapters,context):
     # Add other research files
     for filename in ["dossier.md", "bio.md", "media.md", "publications.md", "quotes.md", "frameworks.md", "themes.md"]:
         if filename in research_files:
+            logger.info(f"filename:{filename} exist in generate outline function")
             context_parts.append(f"=== {filename.upper().replace('.', ' ')} ===\n{research_files[filename]}\n")
     
-    full_context = "\n".join(context_parts).join("/n").join(context) 
-    
+    # full_context = "\n".join(context_parts).join("/n").join(context) 
+    full_context = ""
+
+    if context_parts:
+        full_context += "\n\n".join(context_parts)
+
+    if context:
+        full_context += "\n\n=== USER ANSWERS & LIFE MOMENTS ===\n"
+        full_context += context if isinstance(context, str) else json.dumps(context, indent=2)
+        
     # Truncate if too long (Grok has limits)
     MAX_CONTEXT = 5000
     if len(full_context) > MAX_CONTEXT:
@@ -185,39 +194,83 @@ def generate_outline_copy(figure_name, research_files, no_of_chapters,context):
 You create comprehensive book outlines in the authentic voice of the subject, using their actual words, 
 frameworks, and perspectives from the research materials provided."""
     
-    user_prompt = f"""Create a full {no_of_chapters}-chapter book outline for {figure_name} using the research materials below.
+#     user_prompt = f"""Create a full {no_of_chapters}-chapter book outline for {figure_name} using the research materials below.
 
-**Structure Required:**
+# **Structure Required:**
 
-**Introduction:**
-- Book Title
-- Core Focus
-- Opening Story
-- 1 Big Ideas
-- 1 Direct Quotes
+# **Introduction:**
+# - Book Title
+# - Core Focus
+# - Opening Story
+# - 1 Big Ideas
+# - 1 Direct Quotes
 
-**Chapters 1-{no_of_chapters}:**
-For each chapter:
-- Chapter Title
-- Core Focus (transformational concept)
-- Opening Story (real moment or case study)
-- 1 Big Ideas
-- 1 Direct Quotes
+# **Chapters 1-{no_of_chapters}:**
+# For each chapter:
+# - Chapter Title
+# - Core Focus (transformational concept)
+# - Opening Story (real moment or case study)
+# - 1 Big Ideas
+# - 1 Direct Quotes
 
-**Requirements:**
-- At least 500 words total
-- Each section must have exactly 1 Big Ideas + 1 Direct Quotes
-- Absolutely no fabricated quotes or filler
-- Must feel as if {figure_name} wrote it themselves
-- If interview transcript exists, prioritize its content for voice, tone, and direct quotes
-- Use other research files to support and supplement
+# **Requirements:**
+# - At least 500 words total
+# - Each section must have exactly 1 Big Ideas + 1 Direct Quotes
+# - Absolutely no fabricated quotes or filler
+# - Must feel as if {figure_name} wrote it themselves
+# - If interview transcript exists, prioritize its content for voice, tone, and direct quotes
+# - Use other research files to support and supplement
 
-**Research Materials:**
+# **Research Materials:**
+# {full_context}
+
+# **Book Outline:**
+# """
+    
+    user_prompt = f"""
+You must return ONLY valid JSON.
+Do NOT include markdown, explanations, commentary, or extra text.
+Do NOT wrap the output in ``` blocks.
+
+Generate a structured book outline in the following EXACT JSON schema:
+
+{{
+  "book_title": "string",
+  "introduction": {{
+    "core_focus": "string",
+    "opening_story": "string",
+    "big_idea": "string",
+    "direct_quote": "string"
+  }},
+  "chapters": [
+    {{
+      "chapter_number": number,
+      "chapter_title": "string",
+      "core_focus": "string",
+      "opening_story": "string",
+      "big_idea": "string",
+      "direct_quote": "string"
+    }}
+  ]
+}}
+
+Rules:
+- Create exactly {no_of_chapters} chapters
+- Each chapter must contain REAL content derived from the provided materials
+- Use the subject's authentic voice
+- Do NOT invent quotes — only reuse phrases that appear in the provided materials
+- Avoid fluff, filler, or generic language
+- Maintain narrative continuity across chapters
+
+Subject:
+{figure_name}
+
+Research Materials:
 {full_context}
 
-**Book Outline:**
+Now return the JSON object only.
 """
-    
+
     try:
         completion = client.chat.completions.create(
             model="grok-4-latest",

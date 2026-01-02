@@ -9,12 +9,15 @@ from app.schemas.book import BookSetupSubmitSchema, BookCreate,BookSetupRequest
 from app.models.book import Book
 from app.scripts.web_research import conduct_research,conduct_research_copy
 from app.scripts.generate_outline import generate_outline_copy
+from app.scripts.expand_all_chapters import extract_chapter_titles_from_outline
+from app.core.utils import dummy_outline1,dummy_outline_json
 from app.crud.book import create_book
 import json
 from uuid import UUID
 from app.db.database import SessionLocal
 from fastapi import BackgroundTasks
-from app.core.utils import build_user_story_context
+from app.core.utils import build_user_story_context,build_chapter_summaries_from_outline
+
 import logging
 import time 
 # root logger
@@ -78,9 +81,10 @@ router = APIRouter()
 
 
 def run_conduct_research_worker(book_id: UUID):
+     
     db = SessionLocal()
     try:
-        logger.info("🔄 Research worker started")
+        logger.info(f"🔄 Research worker started for book id:{book_id}")
 
         # 1️⃣ Load Book
         book = (
@@ -122,26 +126,40 @@ def run_conduct_research_worker(book_id: UUID):
         logger.info(f"build_user_story_context :{answers_life_moments_context}")
 
         # ⏳ Simulate research
-        # search_results=conduct_research_copy(figure_name=figure_name,context=answers_life_moments_context,research_sources=research_sources)
-        time.sleep(20)
+        
+        search_results=conduct_research_copy(figure_name=figure_name,refresh=True,research_sources=research_sources)
+        # time.sleep(20)
+
+        # {"bio_content": "### Search 1: site:www.linkedin.com Narendra Modi PM of India\n\n**Narendra Modi, the Prime Minister of India, actively uses LinkedIn to share his thoughts on key initiatives, such as a recent post about his visit to a natural farming summit in Coimbatore (Kimburtur).** [1]\n\nIn the post, highlighted in a DD India YouTube video from December 3, 2025, Modi describes his impressions from the event, praising the integration of India's traditional knowledge with modern ecological principles for chemical-free crop cultivation using farm residues, mulching, and aeration. [1] He notes India's progress, including the government's National Mission on Natural Farming launched the previous year, which has connected hundreds of thousands of farmers (referred to as \"lacks,\" likely meaning lakhs or 100,000s) to sustainable practices, and links it to promoting Shree Anna millets. [1] Modi emphasizes women farmers' growing adoption, addresses challenges like soil degradation from chemical fertilizers and rising costs, and calls for collective action among farmers, scientists, entrepreneurs, and citizens. [1] He ends by inviting followers to share information on natural farming teams. [1]\n\nNo direct LinkedIn post link appears in the search results, but this YouTube coverage from India's public broadcaster DD India confirms Modi's LinkedIn activity on the topic. [1] The query specified site:www.linkedin.com, but results point to this referenced content rather than the page itself.\n\n", "media_content": "### Search 1: site:www.linkedin.com Narendra Modi PM of India interview OR talk OR speech OR TV OR television OR news\n\nNo LinkedIn posts or pages directly matching the query for Narendra Modi as PM of India discussing an **interview**, **talk**, **speech**, **TV**, **television**, or **news** appear in the search results.\n\nThe available results from DD India (December 3, 2025) cover a YouTube video and short where **PM Modi shared thoughts via a LinkedIn post** about his Coimbatore trip, focusing on **natural farming**, sustainable agriculture, regional development, innovation, environmental stewardship, and citizen engagement.[1][2] The video transcript quotes Modi's post, highlighting a summit in Kimbatur (likely Coimbatore area), India's National Mission on Natural Farming, links to Shree Anna (millets), women farmers' involvement, and a call to share examples of natural farming teams.[1] It emphasizes traditional knowledge, soil health via mulching and aeration, reducing chemical dependency, and addressing rising farming costs.[1]\n\n", "pub_content": "", "quote_content": "", "framework_content": "", "theme_content": "### Search 1: \"Narendra Modi PM of India\" values OR beliefs OR principles\n\nNarendra Modi's core **values, beliefs, and principles** as Prime Minister of India emphasize **inclusive development**, **self-reliance**, **welfare of the poor**, **constitutional values**, **spirituality**, and **pragmatic nationalism**, often rooted in philosophies like Integral Humanism and Hindu thought.[1][2][3]\n\n### Key Principles from Governance and Ideology\nThese are synthesized from analyses of his policies, speeches, and leadership style:\n- **Antyodaya and Garib Kalyan (Upliftment of the poorest and welfare of the poor)**: Prioritizing the welfare of the underprivileged, lifting 25 crore people above the poverty line through grassroots schemes, embodying a shift from self to others.[2][4]\n- **Swadeshi and self-reliance (Atmanirbhar Bharat)**: Promoting economic independence, \"Made in India,\" industrialization, private investment, and defense self-sufficiency while attracting foreign capital.[1][2]\n- **Sabka Saath, Sabka Vikas (Together with all, development for all)**: Inclusive growth with minimum government intervention, harmony with society/nature, and cultural rootedness in Indian ethos like Advaita Vedanta, rejecting Western models.[2]\n- **Upholding the Constitution**: Dedication to its noble values of equality, hope, dignity, and welfare state vision, enabling service from humble origins.[3][4]\n- **Spirituality and inclusiveness**: Respect for all faiths, Hindu philosophy of equality, multilateralism with Indian values, and global promotion of yoga for inner peace.[1][2]\n- **Pragmatism and technopopulism**: Enterprise-driven prosperity, digitalization, financial inclusion, education reforms emphasizing Indian knowledge systems, and reforms like new criminal laws.[1][2]\n- **National security and multipolarity**: Firm anti-terrorism stance, military upgrades, Quad partnerships, rejecting hegemony, and sovereignty respect.[1]\n- **Humility and people-first governance**: Humble behavior while striving for success, equality before law, serving the electorate over lobbies.[1][3]\n\n### Philosophical Foundations\nModi's approach draws from **Integral Humanism** by Deendayal Upadhyaya, integrating dharma, artha, kama, and moksha for holistic development.[2] Leadership analyses highlight modeling discipline, shared national vision (e.g., Vikas bhi Virasat bhi\u2014development with heritage), bold reforms, and celebrating citizen efforts.[5] Critics note ties to **Hindutva** (Hindu nationalism).[6]\n\nThese principles have shaped policies from 2014\u20132025, including welfare, infrastructure, and environmental initiatives, per official and analytical sources.[2][4]\n\n", "dossier_path": "static/research/Narendra Modi PM of India/dossier.md"}
         
 
-        search_results = json.dumps({"A":"v"})
+        # search_results = json.dumps({"A":"v"})
 
         # 4️⃣ Update DB
-        book_user.digital_footprint_summary = search_results
-        
-
-        
-
+        book_user.digital_footprint_summary = json.dumps(search_results)
         logger.info(f"✅ Research completed for book {book.id}")
+        dossier_path="static/research/Narendra Modi PM of India/dossier.md"
+        with open(dossier_path, "r", encoding="utf-8") as f:
+           dossier_text = f.read()
+
+        research_files = {
+                "dossier.md": dossier_text
+            }
+
 
 
         # handle create book outline 
-        # outline=generate_outline_copy(no_of_chapters=book.number_of_chapters)
+        # outline=dummy_outline_json
+        outline=generate_outline_copy(figure_name=figure_name,research_files=research_files,context=answers_life_moments_context,no_of_chapters=book.number_of_chapters)
 
-        # book.raw_outline_json = outline
+        logger.info(f"type of outline generated:{type(outline)}")
+        logger.info(f"outline:{outline}")
+
+        # book.raw_outline_json = build_chapter_summaries_from_outline(outline)
+        # book.raw_outline_json=extract_chapter_titles_from_outline(outline)
+        # logger.info(f"after extract_chapter_titles_from_outline:{book.raw_outline_json}")
         book.status = "outline_ready"
+        book.raw_outline_json=outline
 
         logger.info("outline genereated")
 
@@ -248,6 +266,9 @@ def get_research_data(
                 status_code=403,
                 detail="You do not have access to this book",
             )
+        
+        logger.info(f"get research data called for book:{book.id}")
+        logger.info(f"sending research_data:{book.raw_outline_json}")
 
         # 3️⃣ Return research data
         return {
@@ -323,7 +344,7 @@ def create_book_from_setup(
                 length_type=book_setup.desired_length,
             )
         )
-        logger.info("book created")
+        logger.info(f"book created with id:{book.id}")
         # [lib, 1,nfsd.]
 
         figure_name=book_user.name+" "+book_user.title
@@ -373,3 +394,59 @@ def create_book_from_setup(
             "success": False
         }
 
+
+
+
+@router.post(
+    "/create/outline/{book_id}",
+    status_code=status.HTTP_201_CREATED,
+)
+def create_book_outline(
+    book_id:UUID,
+    background_tasks: BackgroundTasks,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+
+    book_user = (   
+        db.query(BookUser)
+        .filter(
+            BookUser.user_id == current_user.id,
+            BookUser.is_deleted == False
+        )
+        .order_by(BookUser.created_at.desc())
+        .first()
+    )
+
+    # book = (
+    #     db.query(Book)
+    #     .filter(
+    #         Book.book_user_id == book_user.id
+    #     )
+    #     .order_by(Book.created_at.desc())
+    #     .first()
+    # )
+
+    if not book_user:
+        logger.info("Book user not found at bulk create life moment")
+        raise HTTPException(
+            status_code=404,
+            detail="Book user not found"
+        )
+
+    try:
+
+        background_tasks.add_task(
+                run_conduct_research_worker,
+                book_id
+            )
+        return {
+            "status":"success"
+        }
+
+    except Exception as e:
+        logger.exception("Failed to bulk create life moments")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to save life moments"
+        )

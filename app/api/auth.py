@@ -62,6 +62,30 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
     print("Access token created:", response)
     return response
 
+
+
+
+@router.post("/token", response_model=Token)
+def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    logger.info(f"Login attempt for user: {form_data.username}")
+    # OAuth2PasswordRequestForm gives: username, password, scope, grant_type, client_id
+    user = get_user_by_email(db, form_data.username)
+    logger.info(f"User fetched: {user}")
+    logger.info(f"Form data password: {form_data.password}")
+    if not user:
+        raise HTTPException(status_code=400, detail="Incorrect username or password")
+    if not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="Incorrect username or password")
+    
+
+    access_token = create_access_token(subject=str(user.id))
+
+    refresh_token = create_refresh_token(subject=str(user.id))
+    response = {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer",
+                "user_email": user.email}
+    print("Access token created:", response)
+    return response
+
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
 

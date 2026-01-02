@@ -233,7 +233,7 @@ def conduct_research_copy(figure_name, context=None, refresh=False,research_sour
         logging.error(f"Failed to initialize Perplexity client: {e}")
         return None
     
-    research_dir = Path("research") / figure_name
+    research_dir = Path("static/research") / figure_name
     research_dir.mkdir(parents=True, exist_ok=True)
     
     # Check if research exists and refresh flag

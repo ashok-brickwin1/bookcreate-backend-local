@@ -131,7 +131,7 @@ def bulk_add_life_moments(
 ):
     logger.info(f"Bulk creating life moments: count={len(payload.moments)}")
 
-    book_user = (
+    book_user = (   
         db.query(BookUser)
         .filter(
             BookUser.user_id == current_user.id,
@@ -146,6 +146,7 @@ def bulk_add_life_moments(
         .filter(
             Book.book_user_id == book_user.id
         )
+        .order_by(Book.created_at.desc())
         .first()
     )
 
@@ -166,10 +167,10 @@ def bulk_add_life_moments(
             book_user_id=book_user.id
         )
 
-        background_tasks.add_task(
-                run_conduct_research_worker,
-                book.id
-            )
+        # background_tasks.add_task(
+        #         run_conduct_research_worker,
+        #         book.id
+        #     )
         return response
 
     except Exception as e:

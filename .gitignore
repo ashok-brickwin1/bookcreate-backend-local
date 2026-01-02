@@ -84,3 +84,5 @@ docker-compose.override.yml
 alembic/versions/*
 app/api/v1/test.py
 research/*
+
+static/*
