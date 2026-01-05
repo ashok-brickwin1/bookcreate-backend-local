@@ -138,7 +138,7 @@ def run_conduct_research_worker(book_id: UUID):
         # 4️⃣ Update DB
         book_user.digital_footprint_summary = json.dumps(search_results)
         logger.info(f"✅ Research completed for book {book.id}")
-        dossier_path="static/research/Narendra Modi PM of India/dossier.md"
+        dossier_path=search_results.get("dossier_path")
         with open(dossier_path, "r", encoding="utf-8") as f:
            dossier_text = f.read()
 
