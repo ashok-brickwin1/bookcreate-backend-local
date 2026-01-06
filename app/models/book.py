@@ -38,15 +38,7 @@ class Book(Base):
         nullable=True
     )
     status = Column(
-        Enum(
-            "failed",
-            "draft",
-            "researching",
-            "outline_ready",
-            "chapters_ready",
-            "completed",
-            name="project_status"
-        ),
+        String(255),
         default="draft"
     )
     raw_outline_json=Column(JSON,nullable=True)

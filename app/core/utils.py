@@ -14,39 +14,126 @@ from typing import Optional
 from app.models import BookUser, Answer, LifeMoment
 from app.api.deps import get_db, get_current_user
 from fastapi import Depends, HTTPException
+from pathlib import Path
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer,
+    PageBreak,
+    ListFlowable,
+    ListItem
+)
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.units import inch
+import re
+
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
+from pathlib import Path
+
 
 
 logger = logging.getLogger(__name__)
 
-GMAIL_USER = "passbyteou@gmail.com"  # replace with your email
-GMAIL_APP_PASSWORD = "qnpi mktl cmre nibm"  # replace with your App Password
+GMAIL_USER = "jagrawal@educatedc.com"  # replace with your email
+GMAIL_APP_PASSWORD = "enkn hgvb dfgf ndvq"  # replace with your App Password
 
 
-def send_email(to_email: str, subject: str, body: str):
+# def send_email(to_email: str, subject: str, body: str):
+#     """
+#     Sends an email using Gmail SMTP with an app password.
+#     """
+#     logger.info(f"Preparing to send email to {to_email} with subject '{subject}'")
+#     try:
+#         msg = MIMEMultipart()
+#         msg["From"] = GMAIL_USER
+#         msg["To"] = to_email
+#         msg["Subject"] = subject
+
+#         msg.attach(MIMEText(body, "plain"))
+
+#         with smtplib.SMTP("smtp.gmail.com", 587) as server:
+#             server.starttls()
+#             server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
+#             # server.send_message(msg)
+#             server.sendmail(GMAIL_USER, [to_email], msg.as_string())
+
+#         logger.info(f"Email successfully sent to {to_email}")
+#         return True
+
+#     except Exception as e:
+#         logger.error(f"Failed to send email to {to_email}: {e}")
+#         return False
+
+
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
+from pathlib import Path
+
+
+def send_email(
+    to_email: str,
+    subject: str,
+    body: str,
+    pdf_path: Path | None = None,
+):
     """
-    Sends an email using Gmail SMTP with an app password.
+    Sends an email using Gmail SMTP with optional PDF attachment.
     """
-    logger.info(f"Preparing to send email to {to_email} with subject '{subject}'")
+    logger.info(f"📧 Preparing to send email to {to_email} | subject='{subject}'")
+
     try:
         msg = MIMEMultipart()
         msg["From"] = GMAIL_USER
         msg["To"] = to_email
         msg["Subject"] = subject
 
+        # 1️⃣ Email body
         msg.attach(MIMEText(body, "plain"))
 
+        # 2️⃣ Attach PDF if provided
+        if pdf_path:
+            pdf_path = Path(pdf_path)
+            logger.info(f"pdf_path at send email:{pdf_path}")
+
+            if not pdf_path.exists():
+                logger.info("pdf path does not exist at send email")
+                raise FileNotFoundError(f"PDF not found at {pdf_path}")
+
+            with open(pdf_path, "rb") as f:
+                pdf_part = MIMEApplication(f.read(), _subtype="pdf")
+
+            pdf_part.add_header(
+                "Content-Disposition",
+                "attachment",
+                filename=pdf_path.name,
+            )
+
+            msg.attach(pdf_part)
+            logger.info(f"📎 Attached PDF: {pdf_path.name}")
+
+        # 3️⃣ Send email
         with smtplib.SMTP("smtp.gmail.com", 587) as server:
             server.starttls()
             server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
-            # server.send_message(msg)
-            server.sendmail(GMAIL_USER, [to_email], msg.as_string())
+            server.send_message(msg)
 
-        logger.info(f"Email successfully sent to {to_email}")
+        logger.info(f"✅ Email successfully sent to {to_email}")
         return True
 
     except Exception as e:
-        logger.error(f"Failed to send email to {to_email}: {e}")
+        logger.exception(f"❌ Failed to send email to {to_email}")
         return False
+
+
+
+
 
 
 
@@ -313,29 +400,159 @@ dummy_outline1="""# Revolutionizing the Future: My Algorithm for Building the Im
 
 
 dummy_outline_json={
-  "book_title": "Atmanirbhar Bharat: Self-Reliance Through Sustainable Progress",
+  "book_title": "Atmanirbhar Bharat: Pathways to Self-Reliance and Sustainability",
   "introduction": {
-    "core_focus": "Embracing India's traditional knowledge for modern self-reliance and inclusive growth",
-    "opening_story": "During my visit to the natural farming summit in Coimbatore, I witnessed farmers integrating ancient wisdom with contemporary methods to cultivate crops without chemicals",
-    "big_idea": "True progress lies in self-reliance, uplifting the poorest, and harmonious development for all through principles like Antyodaya and Sabka Saath Sabka Vikas",
+    "core_focus": "Empowering India through self-reliance, inclusive development, and sustainable practices rooted in traditional knowledge",
+    "opening_story": "During my visit to the natural farming summit in Coimbatore, I witnessed farmers integrating ancient wisdom with modern methods for chemical-free cultivation",
+    "big_idea": "Combining India's traditional knowledge with ecological principles to address soil degradation and promote self-sufficiency",
     "direct_quote": "integration of India's traditional knowledge with modern ecological principles for chemical-free crop cultivation using farm residues, mulching, and aeration"
   },
   "chapters": [
     {
       "chapter_number": 1,
-      "chapter_title": "Natural Farming: Reviving Soil and Self-Sufficiency",
-      "core_focus": "Addressing soil degradation and promoting sustainable agriculture through government initiatives",
-      "opening_story": "At the summit in Coimbatore, I saw hundreds of thousands of farmers connected to natural practices, reducing dependency on chemical fertilizers",
-      "big_idea": "National Mission on Natural Farming embodies Atmanirbhar Bharat by linking traditional methods to modern challenges like rising costs and environmental stewardship",
-      "direct_quote": "National Mission on Natural Farming launched the previous year, which has connected hundreds of thousands of farmers to sustainable practices"
+      "chapter_title": "Natural Farming: Reviving Soil and Communities",
+      "core_focus": "Advancing sustainable agriculture through the National Mission on Natural Farming and women's empowerment",
+      "opening_story": "At the summit in Coimbatore, I saw hundreds of thousands of farmers adopting practices that reduce chemical dependency and rising costs",
+      "big_ideas": [
+        "Promoting Shree Anna millets as part of natural farming to enhance food security",
+        "Encouraging collective action among farmers, scientists, entrepreneurs, and citizens for soil health"
+      ],
+      "direct_quotes": [
+        "National Mission on Natural Farming launched the previous year, which has connected hundreds of thousands of farmers to sustainable practices",
+        "women farmers' growing adoption, addresses challenges like soil degradation from chemical fertilizers and rising costs"
+      ]
     },
     {
       "chapter_number": 2,
-      "chapter_title": "Inclusive Growth: Empowering Women and Communities",
-      "core_focus": "Fostering collective action and women's adoption of natural farming for broader welfare",
-      "opening_story": "Building on the farming mission, I observed women farmers leading the shift to millets and residue-based cultivation, embodying upliftment of the underprivileged",
-      "big_idea": "Sabka Saath Sabka Vikas through Antyodaya means involving farmers, scientists, entrepreneurs, and citizens in self-reliant, inclusive development",
-      "direct_quote": "women farmers' growing adoption, addresses challenges like soil degradation from chemical fertilizers and rising costs, and calls for collective action among farmers, scientists, entrepreneurs, and citizens"
+      "chapter_title": "Self-Reliance and Inclusive Growth: Principles for a New India",
+      "core_focus": "Building on natural farming to embody Antyodaya, Swadeshi, and Sabka Saath Sabka Vikas for uplifting the poor and fostering economic independence",
+      "opening_story": "From the fields of Coimbatore to national policies, my journey reflects lifting 25 crore people above the poverty line through grassroots schemes",
+      "big_ideas": [
+        "Prioritizing welfare of the poor via self-reliance and Made in India initiatives",
+        "Upholding constitutional values of equality and dignity in harmony with nature and society"
+      ],
+      "direct_quotes": [
+        "Antyodaya and Garib Kalyan (Upliftment of the poorest and welfare of the poor)",
+        "Swadeshi and self-reliance (Atmanirbhar Bharat): Promoting economic independence, Made in India"
+      ]
     }
   ]
 }
+
+
+
+
+
+
+def create_book_pdf_from_md(book_dir: str, output_pdf: str):
+    """
+    Create a single PDF book from markdown chapter files in a directory.
+    """
+
+    book_dir = Path(book_dir)
+    chapter_files = sorted(book_dir.glob("*.md"))
+
+    if not chapter_files:
+        raise ValueError("No chapter files found in book directory")
+
+    doc = SimpleDocTemplate(
+        output_pdf,
+        pagesize=A4,
+        rightMargin=50,
+        leftMargin=50,
+        topMargin=50,
+        bottomMargin=50,
+    )
+
+    styles = getSampleStyleSheet()
+
+    styles.add(ParagraphStyle(
+        name="ChapterTitle",
+        fontSize=22,
+        leading=28,
+        spaceAfter=20,
+        alignment=TA_CENTER,
+        bold=True
+    ))
+
+    styles.add(ParagraphStyle(
+        name="SectionTitle",
+        fontSize=15,
+        leading=20,
+        spaceBefore=18,
+        spaceAfter=10,
+        bold=True
+    ))
+
+    styles.add(ParagraphStyle(
+        name="BodyTextCustom",
+        fontSize=11,
+        leading=16,
+        spaceAfter=10
+    ))
+
+    story = []
+
+    for chapter_path in chapter_files:
+        with open(chapter_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+        bullet_buffer = []
+
+        for line in lines:
+            line = line.rstrip()
+
+            # Chapter title
+            if line.startswith("# "):
+                story.append(PageBreak())
+                title = line.replace("# ", "")
+                story.append(Paragraph(title, styles["ChapterTitle"]))
+                story.append(Spacer(1, 0.3 * inch))
+
+            # Section title
+            elif line.startswith("## "):
+                section = line.replace("## ", "")
+                story.append(Spacer(1, 0.2 * inch))
+                story.append(Paragraph(section, styles["SectionTitle"]))
+
+            # Bullet point
+            elif line.startswith("- "):
+                bullet_buffer.append(
+                    Paragraph(
+                        line.replace("- ", ""),
+                        styles["BodyTextCustom"]
+                    )
+                )
+
+            # Empty line → flush bullets
+            elif not line.strip():
+                if bullet_buffer:
+                    story.append(
+                        ListFlowable(
+                            bullet_buffer,
+                            bulletType="bullet",
+                            start="-",
+                            leftIndent=20
+                        )
+                    )
+                    bullet_buffer = []
+                story.append(Spacer(1, 0.1 * inch))
+
+            # Normal paragraph
+            else:
+                # Bold markdown → reportlab bold
+                line = re.sub(r"\*\*(.*?)\*\*", r"<b>\1</b>", line)
+                story.append(Paragraph(line, styles["BodyTextCustom"]))
+
+        # Flush remaining bullets
+        if bullet_buffer:
+            story.append(
+                ListFlowable(
+                    bullet_buffer,
+                    bulletType="bullet",
+                    start="bullet",
+                    leftIndent=20
+                )
+            )
+
+    doc.build(story)

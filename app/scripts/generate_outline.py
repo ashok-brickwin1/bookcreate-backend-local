@@ -248,8 +248,12 @@ Generate a structured book outline in the following EXACT JSON schema:
       "chapter_title": "string",
       "core_focus": "string",
       "opening_story": "string",
-      "big_idea": "string",
-      "direct_quote": "string"
+      "big_ideas": {
+          "string","string"
+      },
+      "direct_quotes": {
+          "string","string"
+      }
     }}
   ]
 }}
@@ -257,6 +261,7 @@ Generate a structured book outline in the following EXACT JSON schema:
 Rules:
 - Create exactly {no_of_chapters} chapters
 - Each chapter must contain REAL content derived from the provided materials
+- Each section must have exactly 2 Big Ideas + 2 Direct Quotes
 - Use the subject's authentic voice
 - Do NOT invent quotes — only reuse phrases that appear in the provided materials
 - Avoid fluff, filler, or generic language

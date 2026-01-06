@@ -16,15 +16,12 @@ load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logger = logging.getLogger()
 
 
 def load_research_archive(figure_name):
     """Load all research files in priority order."""
-    research_dir = Path("research") / figure_name
+    research_dir = Path("static/research") / figure_name
     if not research_dir.exists():
         return {}
     
@@ -63,13 +60,13 @@ def extract_chapter_from_outline(outline_content, chapter_title):
 def expand_chapter(figure_name, chapter_title, research_files):
     """Expand a chapter into full manuscript using ChatGPT."""
     if not OPENAI_API_KEY:
-        logging.error("OPENAI_API_KEY not set. Cannot expand chapter.")
+        logger.error("OPENAI_API_KEY not set. Cannot expand chapter.")
         return None
     
     try:
         client = OpenAI(api_key=OPENAI_API_KEY)
     except Exception as e:
-        logging.error(f"Failed to initialize OpenAI client: {e}")
+        logger.error(f"Failed to initialize OpenAI client: {e}")
         return None
     
     # Find outline
@@ -80,13 +77,13 @@ def expand_chapter(figure_name, chapter_title, research_files):
             break
     
     if not outline_content:
-        logging.error("No outline found in research files")
+        logger.error("No outline found in research files")
         return None
     
     # Extract chapter details from outline
     chapter_details = extract_chapter_from_outline(outline_content, chapter_title)
     if not chapter_details:
-        logging.warning(f"Chapter '{chapter_title}' not found in outline, proceeding with title only")
+        logger.warning(f"Chapter '{chapter_title}' not found in outline, proceeding with title only")
         chapter_details = f"# {chapter_title}\n\n[Chapter details from outline not found]"
     
     # Build context
@@ -102,7 +99,7 @@ def expand_chapter(figure_name, chapter_title, research_files):
     # Truncate if too long (gpt-4o supports ~128k tokens, so ~500k characters is safe)
     MAX_CONTEXT = 500000
     if len(full_context) > MAX_CONTEXT:
-        logging.warning(f"Context too long ({len(full_context)} chars), truncating to {MAX_CONTEXT}")
+        logger.warning(f"Context too long ({len(full_context)} chars), truncating to {MAX_CONTEXT}")
         full_context = full_context[:MAX_CONTEXT] + "\n\n[Context truncated...]"
     
     system_prompt = """You are a professional nonfiction ghostwriter. You expand book outlines into clear, authoritative manuscript chapters written in the first person from the subject's perspective."""
@@ -244,6 +241,192 @@ You must expand this chapter to reach at least {MIN_WORD_COUNT} words. This is n
         
     except Exception as e:
         logging.error(f"Failed to expand chapter: {e}")
+        return None
+
+
+
+def expand_chapter_copy(figure_name, chapter_title, research_files,chapter):
+    """Expand a chapter into full manuscript using ChatGPT."""
+
+    logger.info("expand chapter copy called")
+    logger.info(f"figure_name:{figure_name},chapter_title{chapter_title}, research_files:{research_files} ,chapter:{chapter}")
+    if not OPENAI_API_KEY:
+        logging.error("OPENAI_API_KEY not set. Cannot expand chapter.")
+        return None
+    
+    try:
+        client = OpenAI(api_key=OPENAI_API_KEY)
+    except Exception as e:
+        logging.error(f"Failed to initialize OpenAI client: {e}")
+        return None
+    
+    # Find outline
+    # outline_content = outline
+    # for key in ["book-outline.md", f"{figure_name}-book-outline.md"]:
+    #     if key in research_files:
+    #         outline_content = research_files[key]
+    #         break
+    
+    # if not outline_content:
+    #     logging.error("No outline provided")
+    #     return None
+    
+    # Extract chapter details from outline
+    # chapter_details = extract_chapter_from_outline(outline_content, chapter_title)
+    chapter_details=chapter
+    if not chapter_details:
+        logger.warning(f"Chapter '{chapter_title}' not found in outline, proceeding with title only")
+        chapter_details = f"# {chapter_title}\n\n[Chapter details from outline not found]"
+    
+    # Build context
+    context_parts = [f"=== CHAPTER TO EXPAND ===\n{chapter_details}\n"]
+    
+    # Add research files in priority order
+    for filename in ["interview.txt", "themes.md", "quotes.md", "media.md", "bio.md", "frameworks.md", "dossier.md"]:
+        if filename in research_files:
+            context_parts.append(f"=== {filename.upper().replace('.', ' ')} ===\n{research_files[filename]}\n")
+    
+    full_context = "\n".join(context_parts)
+
+    logger.info(f"full cnotext:{full_context}")
+    
+    # Truncate if too long (gpt-4o supports ~128k tokens, so ~500k characters is safe)
+    MAX_CONTEXT = 50000
+    if len(full_context) > MAX_CONTEXT:
+        logger.warning(f"Context too long ({len(full_context)} chars), truncating to {MAX_CONTEXT}")
+        full_context = full_context[:MAX_CONTEXT] + "\n\n[Context truncated...]"
+    
+    system_prompt = """You are a professional nonfiction ghostwriter. You expand book outlines into clear, authoritative manuscript chapters written in the first person from the subject's perspective."""
+    
+    MIN_WORD_COUNT = 100
+    TARGET_WORD_COUNT = 200
+    MAX_ATTEMPTS = 3
+    
+    # Initial prompt
+    user_prompt = f"""Expand the following chapter from the book outline for {figure_name} into a full manuscript chapter written in first person.
+
+**Chapter to Expand:**
+{chapter_details}
+
+**Research Archive:**
+{full_context}
+
+**Requirements:**
+- Target 100-200 words (absolute minimum 100 words)
+- Write entirely in first person (I, me, my, we, our)
+- Structure:
+  - `# {chapter_title}`
+  - Opening section: Brief professional introduction to the chapter topic (1-2 paragraphs)
+  - Two `##` sections expanding the Big Ideas (use clear, descriptive titles, not "Big Idea 1")
+  - Each Big Idea section must include:
+    - Professional example or case study from my experience
+    - Clear explanation of the concept and its application
+    - `**Field Application:**` practical guidance (1-2 bullet points)
+    - `**Reflection:**` brief summary paragraph
+  - Conclude with `## Synthesis & Next Moves` (synthesize key points, provide 2 actionable steps)
+- Integrate at least 2 distinct direct quotes with proper attribution: "Quote." — Source, Publication (Year)
+- Use professional, clear language throughout
+- Ground insights in specific examples, data, or decisions from my career
+- Maintain a professional, authoritative tone consistent with {figure_name}'s voice
+
+**Manuscript Chapter:**
+"""
+    
+    chapter = None
+    word_count = 0
+    attempt = 0
+    
+    try:
+        while word_count < MIN_WORD_COUNT and attempt < MAX_ATTEMPTS:
+            attempt += 1
+            
+            if attempt == 1:
+                # First attempt: generate full chapter
+                logger.info("first attempt")
+                messages = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ]
+                max_completion_tokens = 6000
+            else:
+                # Subsequent attempts: expand existing chapter
+                logger.info(f"Chapter too short ({word_count} words), expanding (attempt {attempt})...")
+                
+                # Identify which sections need expansion
+                section_analysis = "Review the chapter and identify sections that need more depth. Focus on:"
+                section_analysis += "\n- Adding more detailed examples and case studies"
+                section_analysis += "\n- Expanding explanations with additional context"
+                section_analysis += "\n- Adding more specific data points or metrics"
+                section_analysis += "\n- Deepening the Field Application sections"
+                section_analysis += "\n- Expanding the Reflection paragraphs"
+                section_analysis += "\n- Adding more quotes where appropriate"
+                
+                words_needed = MIN_WORD_COUNT - word_count
+                expand_prompt = f"""The following chapter is too short ({word_count} words, need minimum {MIN_WORD_COUNT} words). You need to add approximately {words_needed} more words.
+
+**Current Chapter:**
+{chapter}
+
+**Research Archive:**
+{full_context}
+
+**CRITICAL TASK:**
+You must expand this chapter to reach at least {MIN_WORD_COUNT} words. This is not optional. The chapter is currently {word_count} words and needs {words_needed} more words.
+
+**Expansion Strategy:**
+1. For each existing section, add 20-50 words by:
+   - Adding 1-2 more detailed examples or case studies from the research
+   - Expanding explanations with specific data points, metrics, or outcomes
+   - Adding more context about implementation challenges and solutions
+   - Including additional quotes from the research archive
+
+2. Expand Field Application sections:
+   - Add 1-2 more bullet points with specific, actionable guidance
+   - Include implementation timelines or considerations
+   - Add examples of how to measure success
+
+
+**Requirements:**
+- DO NOT repeat existing content
+- DO NOT use filler words or padding
+- DO add substantive, valuable content
+- DO maintain the same professional tone and structure
+- DO keep all existing content exactly as written
+- DO integrate new content seamlessly
+- The final chapter MUST be at least {MIN_WORD_COUNT} words
+
+**Expanded Chapter (must be at least {MIN_WORD_COUNT} words):**
+"""
+                
+                messages = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                    {"role": "assistant", "content": chapter},
+                    {"role": "user", "content": expand_prompt}
+                ]
+                max_completion_tokens = 16000  # Increased tokens for substantial expansion
+            
+            completion = client.chat.completions.create(
+                model="gpt-5.1",
+                messages=messages,
+                temperature=0.7,
+                max_completion_tokens=max_completion_tokens
+            )
+            
+            chapter = completion.choices[0].message.content.strip()
+            word_count = len(chapter.split())
+            logger.info(f"Chapter expanded (attempt {attempt}): {word_count} words")
+            
+            if word_count >= MIN_WORD_COUNT:
+                logger.info(f"✅ Chapter meets minimum word count requirement ({word_count} words)")
+                break
+            elif attempt >= MAX_ATTEMPTS:
+                logger.warning(f"⚠️ Chapter still below minimum after {MAX_ATTEMPTS} attempts ({word_count} words, minimum {MIN_WORD_COUNT})")
+        
+        return chapter
+        
+    except Exception as e:
+        logger.error(f"Failed to expand chapter: {e}")
         return None
 
 

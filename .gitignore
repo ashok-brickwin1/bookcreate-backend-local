@@ -86,3 +86,6 @@ app/api/v1/test.py
 research/*
 
 static/*
+
+
+test*

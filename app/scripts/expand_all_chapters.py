@@ -14,14 +14,12 @@ from dotenv import load_dotenv
 # Import from expand_chapter module
 script_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, script_dir)
-from expand_chapter import load_research_archive, expand_chapter, slugify
+from expand_chapter import load_research_archive, expand_chapter, slugify,expand_chapter_copy
 
 load_dotenv()
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logger = logging.getLogger()
+
 
 
 def extract_chapter_titles_from_outline(outline_content):
@@ -139,6 +137,99 @@ def expand_all_chapters(figure_name):
     
     logging.info(f"✅ Expanded {expanded_count}/{len(chapters)} chapters")
     return expanded_count == len(chapters)
+
+
+def expand_all_chapters_copy(figure_name,outline):
+    """Expand all chapters from the outline."""
+    logger.info("expand_all_chapters_copy called")
+    logger.info(f"outline in expand all chapters")
+    research_dir = Path("static/research") / figure_name
+    book_dir = Path("static/book") / figure_name
+    book_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Find outline file
+    # outline_files = [
+    #     research_dir / "outline.md",
+    #     research_dir / f"{figure_name}-book-outline.md",
+    #     book_dir / f"{figure_name}-book-outline.md",
+    #     research_dir / "book-outline.md"
+    # ]
+    
+    # outline_content = None
+    # outline_path = None
+    # for outline_file in outline_files:
+    #     if outline_file.exists():
+    #         with open(outline_file, "r", encoding="utf-8") as f:
+    #             outline_content = f.read()
+    #         outline_path = outline_file
+    #         logging.info(f"Found outline: {outline_path}")
+    #         break
+    
+    if not outline:
+        logger.error(f"No outline found for {figure_name}")
+        return False
+    
+    # Extract chapter titles
+    chapters = outline["chapters"]
+    # chapters= [chapter[chapter_title] for chapter in chapters ]
+
+    logger.info(f"chapters in expand all chapters:{chapters}")
+    
+    if not chapters:
+        logger.error("Could not extract chapter titles from outline")
+        return False
+    
+    logger.info(f"Expanding {len(chapters)} chapters...")
+    
+    # Load research archive
+    research_files = load_research_archive(figure_name) # okay till here 
+    if not research_files:
+        logger.warning(f"No research files found for {figure_name}, proceeding with outline only")
+    
+    # Add outline to research files for expand_chapter to use
+    # research_files["outline.md"] = outline
+    
+    # Expand each chapter
+    expanded_count = 0
+    for i, chapter in enumerate(chapters, start=1):
+        chapter_title = chapter.get("chapter_title")
+
+        if not chapter_title:
+            logger.warning(f"Chapter {i} missing title, skipping")
+            continue
+
+        logger.info(f"Expanding chapter {i}/{len(chapters)}: {chapter_title}")
+
+        chapter_slug = slugify(chapter_title)
+        chapter_path = book_dir / f"{chapter_slug}.md"
+
+        if chapter_path.exists():
+            logger.warning(f"Chapter already exists: {chapter_path}, skipping...")
+            expanded_count += 1
+            continue
+
+
+        logger.info(f"figure_name:{figure_name}, chapter_title:{chapter_title}, research_files:{research_files},chapter:{chapter}")
+
+        chapter_content = expand_chapter_copy(
+            figure_name=figure_name,
+            chapter_title=chapter_title,
+            research_files=research_files,
+            chapter=chapter
+        )
+
+        if chapter_content:
+            with open(chapter_path, "w", encoding="utf-8") as f:
+                f.write(chapter_content)
+
+            logger.info(f"✅ Chapter {i} saved: {chapter_path}")
+            expanded_count += 1
+        else:
+            logger.error(f"❌ Failed to expand chapter: {chapter_title}")
+
+    logger.info(f"✅ Expanded {expanded_count}/{len(chapters)} chapters")
+    return expanded_count == len(chapters)
+
 
 
 def main():
