@@ -43,3 +43,6 @@ python-multipart==0.0.20
 requests==2.25.1
 PyYAML>=6.0.1
 
+
+reportlab==4.4.7
+pillow==12.1.0

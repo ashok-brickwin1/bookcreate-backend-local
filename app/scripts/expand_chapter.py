@@ -294,6 +294,7 @@ def expand_chapter_copy(figure_name, chapter_title, research_files,chapter):
     MAX_CONTEXT = 50000
     if len(full_context) > MAX_CONTEXT:
         logger.warning(f"Context too long ({len(full_context)} chars), truncating to {MAX_CONTEXT}")
+        
         full_context = full_context[:MAX_CONTEXT] + "\n\n[Context truncated...]"
     
     system_prompt = """You are a professional nonfiction ghostwriter. You expand book outlines into clear, authoritative manuscript chapters written in the first person from the subject's perspective."""

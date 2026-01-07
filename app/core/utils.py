@@ -444,7 +444,136 @@ dummy_outline_json={
 
 
 
-def create_book_pdf_from_md(book_dir: str, output_pdf: str):
+# def create_book_pdf_from_md(book_dir: str, output_pdf: str):
+#     """
+#     Create a single PDF book from markdown chapter files in a directory.
+#     """
+
+#     book_dir = Path(book_dir)
+#     chapter_files = sorted(book_dir.glob("*.md"))
+
+#     if not chapter_files:
+#         raise ValueError("No chapter files found in book directory")
+
+#     doc = SimpleDocTemplate(
+#         output_pdf,
+#         pagesize=A4,
+#         rightMargin=50,
+#         leftMargin=50,
+#         topMargin=50,
+#         bottomMargin=50,
+#     )
+
+#     styles = getSampleStyleSheet()
+
+#     styles.add(ParagraphStyle(
+#         name="ChapterTitle",
+#         fontSize=22,
+#         leading=28,
+#         spaceAfter=20,
+#         alignment=TA_CENTER,
+#         bold=True
+#     ))
+
+#     styles.add(ParagraphStyle(
+#         name="SectionTitle",
+#         fontSize=15,
+#         leading=20,
+#         spaceBefore=18,
+#         spaceAfter=10,
+#         bold=True
+#     ))
+
+#     styles.add(ParagraphStyle(
+#         name="BodyTextCustom",
+#         fontSize=11,
+#         leading=16,
+#         spaceAfter=10
+#     ))
+
+#     story = []
+
+#     for chapter_path in chapter_files:
+#         with open(chapter_path, "r", encoding="utf-8") as f:
+#             lines = f.readlines()
+
+#         bullet_buffer = []
+
+#         for line in lines:
+#             line = line.rstrip()
+
+#             # Chapter title
+#             if line.startswith("# "):
+#                 story.append(PageBreak())
+#                 title = line.replace("# ", "")
+#                 story.append(Paragraph(title, styles["ChapterTitle"]))
+#                 story.append(Spacer(1, 0.3 * inch))
+
+#             # Section title
+#             elif line.startswith("## "):
+#                 section = line.replace("## ", "")
+#                 story.append(Spacer(1, 0.2 * inch))
+#                 story.append(Paragraph(section, styles["SectionTitle"]))
+
+#             # Bullet point
+#             elif line.startswith("- "):
+#                 bullet_buffer.append(
+#                     Paragraph(
+#                         line.replace("- ", ""),
+#                         styles["BodyTextCustom"]
+#                     )
+#                 )
+
+#             # Empty line → flush bullets
+#             elif not line.strip():
+#                 if bullet_buffer:
+#                     story.append(
+#                         ListFlowable(
+#                             bullet_buffer,
+#                             bulletType="bullet",
+#                             start="-",
+#                             leftIndent=20
+#                         )
+#                     )
+#                     bullet_buffer = []
+#                 story.append(Spacer(1, 0.1 * inch))
+
+#             # Normal paragraph
+#             else:
+#                 # Bold markdown → reportlab bold
+#                 line = re.sub(r"\*\*(.*?)\*\*", r"<b>\1</b>", line)
+#                 story.append(Paragraph(line, styles["BodyTextCustom"]))
+
+#         # Flush remaining bullets
+#         if bullet_buffer:
+#             story.append(
+#                 ListFlowable(
+#                     bullet_buffer,
+#                     bulletType="bullet",
+#                     start="bullet",
+#                     leftIndent=20
+#                 )
+#             )
+
+#     doc.build(story)
+
+
+
+
+def normalize_hyphens(text: str) -> str:
+    return (
+        text
+        .replace("\u2010", "-")  # hyphen
+        .replace("\u2011", "-")  # non-breaking hyphen
+        .replace("\u2012", "-")
+        .replace("\u2013", "-")  # en dash
+        .replace("\u2014", "-")  # em dash
+        .replace("\u2212", "-")  # minus sign
+    )
+
+
+
+def create_book_pdf_from_md(book_dir: str, output_pdf: str,book_title:str,dedication:str):
     """
     Create a single PDF book from markdown chapter files in a directory.
     """
@@ -491,7 +620,41 @@ def create_book_pdf_from_md(book_dir: str, output_pdf: str):
         spaceAfter=10
     ))
 
+    styles.add(ParagraphStyle(
+        name="Name",
+        fontSize=18,
+        leading=22,
+        spaceAfter=40,
+        alignment=TA_CENTER
+    ))
+
+    styles.add(ParagraphStyle(
+        name="Dedication",
+        fontSize=12,
+        leading=18,
+        alignment=TA_CENTER,
+        italic=True
+    ))
+
+
     story = []
+    # --- Front Page ---
+    story.append(Spacer(1, 2.5 * inch))
+
+    story.append(Paragraph(
+        f"<b>{book_title}</b>",
+        styles["Name"]
+    ))
+
+    story.append(Spacer(1, 0.5 * inch))
+    if dedication: 
+        story.append(Paragraph(
+            f"Dedicated to <b>{dedication}</b>",
+            styles["Dedication"]
+        ))
+
+    # Move chapters to next page
+    story.append(PageBreak())
 
     for chapter_path in chapter_files:
         with open(chapter_path, "r", encoding="utf-8") as f:
@@ -541,7 +704,10 @@ def create_book_pdf_from_md(book_dir: str, output_pdf: str):
             # Normal paragraph
             else:
                 # Bold markdown → reportlab bold
-                line = re.sub(r"\*\*(.*?)\*\*", r"<b>\1</b>", line)
+                # line = re.sub(r"\\(.?)\\*", r"<b>\1</b>", line)
+                # story.append(Paragraph(line, styles["BodyTextCustom"]))
+                line = normalize_hyphens(line)
+                line = re.sub(r"\\(.?)\\*", r"<b>\1</b>", line)
                 story.append(Paragraph(line, styles["BodyTextCustom"]))
 
         # Flush remaining bullets

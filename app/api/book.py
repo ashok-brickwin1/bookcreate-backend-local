@@ -272,9 +272,15 @@ def run_create_book(book_id: UUID):
         logger.info(f"📘 Generating PDF for: {figure_name}")
 
         # 4️⃣ Generate PDF (writes to disk)
+        # create_book_pdf_from_md(
+        #     book_dir=str(book_dir),
+        #     output_pdf=str(output_pdf)
+        # )
         create_book_pdf_from_md(
             book_dir=str(book_dir),
-            output_pdf=str(output_pdf)
+            output_pdf=str(output_pdf),
+            book_title=str(book.title),
+            dedication=str(book.dedication)
         )
 
 
@@ -817,13 +823,17 @@ def download_book(
         figure_name = f"{book_user.name} {book_user.title}"
         book_dir = Path(f"static/book/{figure_name}")
         output_pdf = Path(f"static/book/{figure_name}.pdf")
+        book_title=str(book.title),
+        dedication=str(book.dedication)
 
         logger.info(f"📘 Generating PDF for: {figure_name}")
 
         # 4️⃣ Generate PDF (writes to disk)
         create_book_pdf_from_md(
             book_dir=str(book_dir),
-            output_pdf=str(output_pdf)
+            output_pdf=str(output_pdf),
+            book_title=str(book.title),
+        dedication=str(book.dedication)
         )
 
         # 5️⃣ Validate PDF exists
