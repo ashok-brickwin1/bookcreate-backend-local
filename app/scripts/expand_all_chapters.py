@@ -201,7 +201,7 @@ def expand_all_chapters_copy(figure_name,outline):
         logger.info(f"Expanding chapter {i}/{len(chapters)}: {chapter_title}")
 
         chapter_slug = slugify(chapter_title)
-        chapter_path = book_dir / f"{chapter_slug}.md"
+        chapter_path = book_dir / f"chapter{i}_{chapter_slug}.md"
 
         if chapter_path.exists():
             logger.warning(f"Chapter already exists: {chapter_path}, skipping...")

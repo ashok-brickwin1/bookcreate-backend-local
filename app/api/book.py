@@ -280,9 +280,18 @@ def run_create_book(book_id: UUID):
 
         # send email functionality
 
-        body="Please find the attached pdf of your book"
+        body = f"""
+        Hi {book_user.name}
 
-        send_email("ashwani.tripathi@brickwin.com","Your Book Has Generated",body, pdf_path=output_pdf)
+        Your Book has been generated successfully.
+        Please find the attachment below.
+        
+
+        Regards, 
+        The Educated Team 
+        """
+
+        send_email(book_user.email,"Your Book Has Generated",body, pdf_path=output_pdf)
         db.commit()
         db.refresh(book)  # ✅ CRITICAL
         db.refresh(book_user)
