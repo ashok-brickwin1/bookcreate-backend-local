@@ -192,6 +192,7 @@ def expand_all_chapters_copy(figure_name,outline):
     # Expand each chapter
     expanded_count = 0
     for i, chapter in enumerate(chapters, start=1):
+   
         chapter_title = chapter.get("chapter_title")
 
         if not chapter_title:
@@ -202,6 +203,8 @@ def expand_all_chapters_copy(figure_name,outline):
 
         chapter_slug = slugify(chapter_title)
         chapter_path = book_dir / f"chapter{i}_{chapter_slug}.md"
+        logger.info(f"figure_name:{figure_name}, chapter_title:{chapter_title}, research_files:{research_files},chapter:{chapter}")
+
 
         if chapter_path.exists():
             logger.warning(f"Chapter already exists: {chapter_path}, skipping...")
@@ -209,8 +212,7 @@ def expand_all_chapters_copy(figure_name,outline):
             continue
 
 
-        logger.info(f"figure_name:{figure_name}, chapter_title:{chapter_title}, research_files:{research_files},chapter:{chapter}")
-
+        
         chapter_content = expand_chapter_copy(
             figure_name=figure_name,
             chapter_title=chapter_title,
@@ -225,6 +227,7 @@ def expand_all_chapters_copy(figure_name,outline):
             logger.info(f"✅ Chapter {i} saved: {chapter_path}")
             expanded_count += 1
         else:
+
             logger.error(f"❌ Failed to expand chapter: {chapter_title}")
 
     logger.info(f"✅ Expanded {expanded_count}/{len(chapters)} chapters")

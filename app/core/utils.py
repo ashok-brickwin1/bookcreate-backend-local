@@ -569,6 +569,9 @@ def normalize_hyphens(text: str) -> str:
         .replace("\u2013", "-")  # en dash
         .replace("\u2014", "-")  # em dash
         .replace("\u2212", "-")  # minus sign
+        .replace("\u00ad", "")   # soft hyphen (REMOVE)
+        # non-breaking spaces
+        .replace("\u00a0", " ")
     )
 
 
@@ -682,7 +685,8 @@ def create_book_pdf_from_md(book_dir: str, output_pdf: str,book_title:str,dedica
             elif line.startswith("- "):
                 bullet_buffer.append(
                     Paragraph(
-                        line.replace("- ", ""),
+                        # line.replace("- ", ""),
+                        normalize_hyphens(line.replace("- ", "")),
                         styles["BodyTextCustom"]
                     )
                 )
@@ -704,10 +708,10 @@ def create_book_pdf_from_md(book_dir: str, output_pdf: str,book_title:str,dedica
             # Normal paragraph
             else:
                 # Bold markdown → reportlab bold
-                # line = re.sub(r"\\(.?)\\*", r"<b>\1</b>", line)
+                # line = re.sub(r"\*\*(.*?)\*\*", r"<b>\1</b>", line)
                 # story.append(Paragraph(line, styles["BodyTextCustom"]))
                 line = normalize_hyphens(line)
-                line = re.sub(r"\\(.?)\\*", r"<b>\1</b>", line)
+                line = re.sub(r"\*\*(.*?)\*\*", r"<b>\1</b>", line)
                 story.append(Paragraph(line, styles["BodyTextCustom"]))
 
         # Flush remaining bullets
