@@ -11,6 +11,8 @@ from app.api import auth
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
+from fastapi.staticfiles import StaticFiles
+
 
 from app.api import api_router
 
@@ -34,8 +36,17 @@ console_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
+from pathlib import Path
+
 
 app = FastAPI(title="backend")
+
+app.mount(
+    "/static",
+    StaticFiles(directory="static"),
+    name="static"
+)
+
 
 # 🔓 CORS (React → FastAPI)
 
