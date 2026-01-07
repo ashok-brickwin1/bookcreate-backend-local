@@ -671,13 +671,13 @@ def create_book_pdf_from_md(book_dir: str, output_pdf: str,book_title:str,dedica
             # Chapter title
             if line.startswith("# "):
                 story.append(PageBreak())
-                title = line.replace("# ", "")
+                title = normalize_hyphens(line.replace("# ", ""))
                 story.append(Paragraph(title, styles["ChapterTitle"]))
                 story.append(Spacer(1, 0.3 * inch))
 
             # Section title
             elif line.startswith("## "):
-                section = line.replace("## ", "")
+                section = normalize_hyphens(line.replace("## ", ""))
                 story.append(Spacer(1, 0.2 * inch))
                 story.append(Paragraph(section, styles["SectionTitle"]))
 
