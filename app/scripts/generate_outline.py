@@ -151,6 +151,7 @@ def generate_outline_copy(figure_name, research_files, no_of_chapters,context):
     """Generate book outline using Grok."""
     logger.info("generate outline copy called")
 
+
     if not XAI_API_KEY:
         logger.error("XAI_API_KEY not set. Cannot generate outline.")
         return None
@@ -185,7 +186,7 @@ def generate_outline_copy(figure_name, research_files, no_of_chapters,context):
         full_context += context if isinstance(context, str) else json.dumps(context, indent=2)
         
     # Truncate if too long (Grok has limits)
-    MAX_CONTEXT = 5000
+    MAX_CONTEXT = 50000
     if len(full_context) > MAX_CONTEXT:
         logging.warning(f"Context too long ({len(full_context)}), truncating to {MAX_CONTEXT}")
         full_context = full_context[:MAX_CONTEXT] + "\n\n[Context truncated...]"
@@ -260,6 +261,7 @@ Generate a structured book outline in the following EXACT JSON schema:
 
 Rules:
 - Create exactly {no_of_chapters} chapters
+- At least 2,000 words total
 - Each chapter must contain REAL content derived from the provided materials
 - Each section must have exactly 5 Big Ideas + 5 Direct Quotes
 - Use the subject's authentic voice

@@ -245,15 +245,15 @@ def conduct_research_copy(figure_name, context=None, refresh=False,research_sour
     logging.info(f"Starting comprehensive research for {figure_name}...")
     
     # Phase 1: Identity & Biography
-    # bio_queries = [
-    #     f'site:linkedin.com/in/ "{figure_name}"',
-    #     f'site:wikipedia.org "{figure_name}"',
-    #     f'site:crunchbase.com "{figure_name}"',
-    #     f'"{figure_name}" biography OR "about" OR "profile"',
-    #     f'"{figure_name}" CEO OR founder OR executive',
-    #     f'"{figure_name}" interview OR profile OR feature'
-    # ]
-    bio_queries=[]
+    bio_queries = [
+        f'site:linkedin.com/in/ "{figure_name}"',
+        f'site:wikipedia.org "{figure_name}"',
+        f'site:crunchbase.com "{figure_name}"',
+        f'"{figure_name}" biography OR "about" OR "profile"',
+        f'"{figure_name}" CEO OR founder OR executive',
+        f'"{figure_name}" interview OR profile OR feature'
+    ]
+    # bio_queries=[]
     for source in research_sources:
         bio_queries.append(f"site:{source} {figure_name}")
 
@@ -261,62 +261,62 @@ def conduct_research_copy(figure_name, context=None, refresh=False,research_sour
 
     
     # Phase 2: Media Sweep
-    # media_queries = [
-    #     f'site:youtube.com "{figure_name}" interview OR talk OR speech',
-    #     f'site:spotify.com OR site:apple.com/podcasts "{figure_name}"',
-    #     f'"{figure_name}" video OR webinar OR presentation',
-    #     f'"{figure_name}" interview OR conversation OR discussion',
-    #     f'"{figure_name}" conference OR summit OR keynote',
-    #     f'"{figure_name}" TV OR television OR news'
-    # ]
-    media_queries=[]
+    media_queries = [
+        f'site:youtube.com "{figure_name}" interview OR talk OR speech',
+        f'site:spotify.com OR site:apple.com/podcasts "{figure_name}"',
+        f'"{figure_name}" video OR webinar OR presentation',
+        f'"{figure_name}" interview OR conversation OR discussion',
+        f'"{figure_name}" conference OR summit OR keynote',
+        f'"{figure_name}" TV OR television OR news'
+    ]
+    # media_queries=[]
     for source in research_sources:
         media_queries.append(f"site:{source} {figure_name} interview OR talk OR speech OR TV OR television OR news")
     media_content = research_phase(client, figure_name, context, "Media", media_queries)
     
     # Phase 3: Publications
-    # pub_queries = [
-    #     f'"{figure_name}" book OR author OR published',
-    #     f'"{figure_name}" article OR blog OR writing',
-    #     f'"{figure_name}" research OR study OR paper',
-    #     f'"{figure_name}" whitepaper OR report OR analysis',
-    #     f'site:patents.google.com "{figure_name}"',
-    #     f'site:medium.com OR site:substack.com "{figure_name}"'
-    # ]
-    # pub_content = research_phase(client, figure_name, context, "Publications", pub_queries)
-    pub_content=""
+    pub_queries = [
+        f'"{figure_name}" book OR author OR published',
+        f'"{figure_name}" article OR blog OR writing',
+        f'"{figure_name}" research OR study OR paper',
+        f'"{figure_name}" whitepaper OR report OR analysis',
+        f'site:patents.google.com "{figure_name}"',
+        f'site:medium.com OR site:substack.com "{figure_name}"'
+    ]
+    pub_content = research_phase(client, figure_name, context, "Publications", pub_queries)
+    # pub_content=""
     
     # Phase 4: Quotes
-    # quote_queries = [
-    #     # f'"{figure_name}" quotes OR sayings OR wisdom',
-    #     # f'"{figure_name}" said OR stated OR mentioned',
-    #     # f'site:twitter.com OR site:linkedin.com "{figure_name}"',
-    #     # f'"{figure_name}" speech OR presentation OR keynote',
-    #     # f'"{figure_name}" quote OR insight OR perspective'
-    # ]
-    # quote_content = research_phase(client, figure_name, context, "Quotes", quote_queries)
-    quote_content =""
+    quote_queries = [
+        f'"{figure_name}" quotes OR sayings OR wisdom',
+        f'"{figure_name}" said OR stated OR mentioned',
+        f'site:twitter.com OR site:linkedin.com "{figure_name}"',
+        f'"{figure_name}" speech OR presentation OR keynote',
+        f'"{figure_name}" quote OR insight OR perspective'
+    ]
+    quote_content = research_phase(client, figure_name, context, "Quotes", quote_queries)
+    # quote_content =""
     
     # Phase 5: Frameworks
-    # framework_queries = [
-    #     f'"{figure_name}" framework OR model OR methodology',
-    #     f'"{figure_name}" process OR system OR approach',
-    #     f'"{figure_name}" strategy OR method OR technique',
-    #     f'"{figure_name}" concept OR theory OR principle',
-    #     f'"{figure_name}" tool OR technique OR practice',
-    #     f'"{figure_name}" philosophy OR mindset OR thinking'
-    # ]
-    # framework_content = research_phase(client, figure_name, context, "Frameworks", framework_queries)
-    framework_content =""
+    framework_queries = [
+        f'"{figure_name}" framework OR model OR methodology',
+        f'"{figure_name}" process OR system OR approach',
+        f'"{figure_name}" strategy OR method OR technique',
+        f'"{figure_name}" concept OR theory OR principle',
+        f'"{figure_name}" tool OR technique OR practice',
+        f'"{figure_name}" philosophy OR mindset OR thinking'
+    ]
+    framework_content = research_phase(client, figure_name, context, "Frameworks", framework_queries)
+    # framework_content =""
     
     # Phase 6: Themes
     theme_queries = [
         f'"{figure_name}" values OR beliefs OR principles',
-        # f'"{figure_name}" mission OR purpose OR vision',
-        # f'"{figure_name}" philosophy OR worldview OR perspective',
-        # f'"{figure_name}" passionate OR interested OR focused',
-        # f'"{figure_name}" concerned OR worried OR focused on',
-        # f'"{figure_name}" goal OR objective OR aim'
+        f'"{figure_name}" mission OR purpose OR vision',
+        f'"{figure_name}" philosophy OR worldview OR perspective',
+        f'"{figure_name}" passionate OR interested OR focused',
+        f'"{figure_name}" concerned OR worried OR focused on',
+        f'"{figure_name}" goal OR objective OR aim'
     ]
     theme_content = research_phase(client, figure_name, context, "Themes", theme_queries)
     

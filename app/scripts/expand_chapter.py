@@ -291,17 +291,17 @@ def expand_chapter_copy(figure_name, chapter_title, research_files,chapter):
     logger.info(f"full cnotext:{full_context}")
     
     # Truncate if too long (gpt-4o supports ~128k tokens, so ~500k characters is safe)
-    MAX_CONTEXT = 50000
+    MAX_CONTEXT = 500000
     if len(full_context) > MAX_CONTEXT:
         logger.warning(f"Context too long ({len(full_context)} chars), truncating to {MAX_CONTEXT}")
-        
+
         full_context = full_context[:MAX_CONTEXT] + "\n\n[Context truncated...]"
     
     system_prompt = """You are a professional nonfiction ghostwriter. You expand book outlines into clear, authoritative manuscript chapters written in the first person from the subject's perspective."""
     
-    MIN_WORD_COUNT = 100
-    TARGET_WORD_COUNT = 200
-    MAX_ATTEMPTS = 3
+    MIN_WORD_COUNT = 3800
+    TARGET_WORD_COUNT = 4200
+    MAX_ATTEMPTS = 5
     
     # Initial prompt
     user_prompt = f"""Expand the following chapter from the book outline for {figure_name} into a full manuscript chapter written in first person.
@@ -313,19 +313,19 @@ def expand_chapter_copy(figure_name, chapter_title, research_files,chapter):
 {full_context}
 
 **Requirements:**
-- Target 100-200 words (absolute minimum 100 words)
+- Target 4,200-4,800 words (absolute minimum 3,800 words)
 - Write entirely in first person (I, me, my, we, our)
 - Structure:
   - `# {chapter_title}`
-  - Opening section: Brief professional introduction to the chapter topic (1-2 paragraphs)
+  - Opening section: Brief professional introduction to the chapter topic (2-3 paragraphs)
   - Two `##` sections expanding the Big Ideas (use clear, descriptive titles, not "Big Idea 1")
   - Each Big Idea section must include:
     - Professional example or case study from my experience
     - Clear explanation of the concept and its application
-    - `**Field Application:**` practical guidance (1-2 bullet points)
+    - `**Field Application:**` practical guidance (3-5 bullet points)
     - `**Reflection:**` brief summary paragraph
-  - Conclude with `## Synthesis & Next Moves` (synthesize key points, provide 2 actionable steps)
-- Integrate at least 2 distinct direct quotes with proper attribution: "Quote." — Source, Publication (Year)
+  - Conclude with `## Synthesis & Next Moves` (synthesize key points, provide 3 actionable steps)
+- Integrate at least 6 distinct direct quotes with proper attribution: "Quote." — Source, Publication (Year)
 - Use professional, clear language throughout
 - Ground insights in specific examples, data, or decisions from my career
 - Maintain a professional, authoritative tone consistent with {figure_name}'s voice
@@ -375,16 +375,18 @@ def expand_chapter_copy(figure_name, chapter_title, research_files,chapter):
 You must expand this chapter to reach at least {MIN_WORD_COUNT} words. This is not optional. The chapter is currently {word_count} words and needs {words_needed} more words.
 
 **Expansion Strategy:**
-1. For each existing section, add 20-50 words by:
-   - Adding 1-2 more detailed examples or case studies from the research
+1. For each existing section, add 200-400 words by:
+   - Adding 2-3 more detailed examples or case studies from the research
    - Expanding explanations with specific data points, metrics, or outcomes
    - Adding more context about implementation challenges and solutions
    - Including additional quotes from the research archive
 
 2. Expand Field Application sections:
-   - Add 1-2 more bullet points with specific, actionable guidance
+   - Add 2-3 more bullet points with specific, actionable guidance
    - Include implementation timelines or considerations
    - Add examples of how to measure success
+
+
 
 
 **Requirements:**
