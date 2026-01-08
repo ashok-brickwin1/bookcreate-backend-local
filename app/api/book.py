@@ -696,7 +696,6 @@ def create_book_outline(
 
 
 
-
 @router.post(
     "/pdf/create/{book_id}",
     status_code=status.HTTP_201_CREATED,
