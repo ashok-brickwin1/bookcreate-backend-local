@@ -74,3 +74,50 @@ def bulk_save_answers(
         "saved_count": len(saved),
         "message": "Answers saved successfully"
     }
+
+
+
+
+
+
+
+
+from pydantic import BaseModel
+from typing import List
+
+
+
+class AnswerItemSchema(BaseModel):
+    question_id: str
+    answer_text: str
+
+
+class AnswerListResponseSchema(BaseModel):
+    answers: List[AnswerItemSchema]
+
+
+@router.get(
+    "/dummy",
+    response_model=AnswerListResponseSchema
+)
+def get_dummy_answers():
+    """
+    Dummy endpoint to prefill guided interview answers
+    """
+    logger.info("Providing dummy answers for guided interview")
+    return {
+        "answers": [
+            {
+                "question_id": "personal-earliest-understanding",
+                "answer_text": "I grew up in a close-knit family that valued education and curiosity."
+            },
+            {
+                "question_id": "personal-influential-people",
+                "answer_text": "My career started with a deep interest in building things that help people."
+            },
+            {
+                "question_id": "prof-first-career-choice",
+                "answer_text": "A major turning point was leaving a stable job to pursue entrepreneurship."
+            }
+        ]
+    }
