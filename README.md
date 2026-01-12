@@ -54,3 +54,8 @@ Whenever you **add, change, or remove a model/column**, you must generate and ap
     ```bash
     alembic upgrade head
     ```
+
+
+
+uvicorn app.main:app --reload
+source .venv/bin/activate

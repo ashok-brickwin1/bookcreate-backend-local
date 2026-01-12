@@ -34,8 +34,7 @@ class Book(Base):
     dedication = Column(Text,nullable=True)
     number_of_chapters = Column(Integer,nullable=True)
     length_type = Column(
-        Enum("short", "medium", "large", name="book_length_type"),
-        nullable=True
+       Text,nullable=True
     )
     status = Column(
         String(255),

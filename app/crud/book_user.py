@@ -42,3 +42,15 @@ def soft_delete_book_user(db: Session, book_user_id: UUID):
     if book_user:
         book_user.is_deleted = True
         db.commit()
+
+
+def get_latest_book_user(db: Session, user_id: UUID):#Ashok
+    return (
+        db.query(BookUser)
+        .filter(
+            BookUser.user_id == user_id,
+            BookUser.is_deleted == False
+        )
+        .order_by(BookUser.created_at.desc())
+        .first()
+    )

@@ -92,3 +92,97 @@ def create_research_sources_from_social_profiles(
         db.rollback()
         logger.exception("Failed to create research sources")
         raise
+
+
+
+
+
+KNOWN_SITES = {"linkedin", "twitter", "website"}
+
+def get_social_profiles_for_book_user(
+    db: Session,
+    book_user_id,
+) -> dict:
+    rows = (
+        db.query(ResearchSource)
+        .filter(ResearchSource.book_user_id == book_user_id)
+        .all()
+    )
+
+    social_profiles = {
+        "linkedin": None,
+        "twitter": None,
+        "website": None,
+        "others": {},
+    }
+    print(rows,"ASHOK ROWS")
+    for row in rows:
+        if not row.source_site or not row.source_url:
+            continue
+
+        site = row.source_site.lower().strip()
+
+        if site in KNOWN_SITES:
+            social_profiles[site] = row.source_url
+        else:
+            social_profiles["others"][site] = row.source_url
+
+    # optional: remove empty others
+    if not social_profiles["others"]:
+        social_profiles["others"] = {}
+
+
+    logger.info(f"fetched social profiles for book_user_id:{book_user_id} profiles:{social_profiles}")
+
+    return social_profiles
+
+#ASHOK ADDED THIS FOR CREATE AND UPDATE
+def upsert_research_sources_from_social_profiles(
+    db: Session,
+    book_user_id: UUID,
+    social_profiles: dict,
+):
+    
+    logger.info(f"called to upsert research sources from social profiles with data:{social_profiles}")
+    def upsert(site, url):
+        existing = (
+            db.query(ResearchSource)
+            .filter(
+                ResearchSource.book_user_id == book_user_id
+            )
+            .first()
+        )
+        # deleting existing and adding new to avoid complexity
+        if existing:
+            db.delete(existing)
+            db.commit()
+
+        # if existing:
+        #     existing.source_url = url
+        # else:
+        db.add(
+            ResearchSource(
+                book_user_id=book_user_id,
+                source_site=site,
+                source_url=url,
+            )
+        )
+
+    for site in ["linkedin", "twitter", "website"]:
+        if social_profiles.get(site):
+            upsert(site, social_profiles[site])
+
+    for site, url in (social_profiles.get("others") or {}).items():
+        if url:
+            upsert(site, url)
+
+    db.commit()
+
+    existing = (
+            db.query(ResearchSource)
+            .filter(
+                ResearchSource.book_user_id == book_user_id
+            )
+            .all()
+        )
+    logger.info(f"no of research sources created/updated from social profiles: {len(existing)}")

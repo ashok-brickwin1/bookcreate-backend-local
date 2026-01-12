@@ -40,7 +40,10 @@ class BookSetupRequest(BaseModel):
 
 class BookUpdate(BaseModel):
     title: str | None = None
+    genre: Optional[str] = None
     dedication: str | None = None
+    number_of_chapters: Optional[int] = None
+    length_type: Optional[str] = None  # short | medium | large
     raw_outline_json: dict | None = None
     raw_book_data: dict | None = None
     status: str | None = None
@@ -53,3 +56,14 @@ class BookRead(BaseSchema):
     status: str
     number_of_chapters: int | None
     created_at: datetime
+
+
+class BookListSchema(BaseModel):
+    id: UUID
+    genre: Optional[str] = None
+    custom_genre: Optional[str] = None
+    working_title: str
+    chapter_count: int
+    desired_length: Optional[str] = None
+    dedication: Optional[str] = None
+    gdpr_consent: bool
