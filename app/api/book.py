@@ -102,6 +102,7 @@ def run_conduct_research_worker(book_id: UUID):
      
     db = SessionLocal()
     try:
+       
         logger.info(f"🔄 Research worker started for book id:{book_id}")
 
         # 1️⃣ Load Book
@@ -121,6 +122,7 @@ def run_conduct_research_worker(book_id: UUID):
             .filter(BookUser.id == book.book_user_id, BookUser.is_deleted == False)
             .first()
         )
+       
 
         if not book_user:
             logger.error("❌ BookUser not found in worker")
@@ -225,6 +227,7 @@ def run_create_book(book_id: UUID):
     db = SessionLocal()
     try:
         logger.info(f"🔄 Create Book worker started for book id:{book_id}")
+        email="ashwani.tripathi@brickwin.com"
 
         # 1️⃣ Load Book
         book = (
@@ -243,6 +246,7 @@ def run_create_book(book_id: UUID):
             .filter(BookUser.id == book.book_user_id, BookUser.is_deleted == False)
             .first()
         )
+        email=book_user.email
 
         if not book_user:
             logger.error("❌ BookUser not found in worker run_create_book")
@@ -311,6 +315,8 @@ def run_create_book(book_id: UUID):
         logger.error(f"🔥 EXCEPTION TYPE: {type(e)}")
         logger.error(f"🔥 EXCEPTION MESSAGE at run_create_book: {str(e)}")
         book.status = "failed"
+        send_email(email,"Failed To Generate Book","Please try again, your book generation is failed.", pdf_path=None)
+        send_email("ashwani.tripathi@brickwin.com","Failed To Generate Book of user",f"{str(e)}", pdf_path=None)
         db.commit()
         db.refresh(book)
         logger.exception("🔥 run_create_book Worker failed")

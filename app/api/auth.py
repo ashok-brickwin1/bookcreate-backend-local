@@ -12,6 +12,7 @@ from app.core.security import get_password_hash
 import logging, secrets, string
 from app.core.utils import send_email
 from pydantic import BaseModel
+from app.models.book_user import BookUser
 from jose import jwt
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -55,10 +56,11 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
     
 
     access_token = create_access_token(subject=str(user.id))
+    has_book = db.query(BookUser).filter(BookUser.user_id == user.id, BookUser.is_deleted == False).first() is not None
 
     refresh_token = create_refresh_token(subject=str(user.id))
     response = {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer",
-                "user_email": user.email}
+                "user_email": user.email, "has_book": has_book}
     print("Access token created:", response)
     return response
 
