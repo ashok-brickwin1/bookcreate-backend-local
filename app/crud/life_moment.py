@@ -39,6 +39,12 @@ def bulk_create_life_moments(
     book_user_id: UUID
 ):
     logger.info(f"creating bulk moments with moments data:{moments}")
+    db.query(LifeMoment).filter(
+            LifeMoment.book_user_id == book_user_id
+        ).delete(synchronize_session=False)
+    db.commit()
+    
+    
     objects = [
         LifeMoment(
             book_user_id=book_user_id,
