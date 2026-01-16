@@ -292,6 +292,8 @@ def run_create_book(book_id: UUID):
             dedication=str(book.dedication)
         )
         logger.info(f"sending mail to book user:{book_user.email}")
+        send_to = book_user.email
+        logger.info(f"📧 Sending email to before send_to : {send_to}")
 
 
         # send email functionality
@@ -307,7 +309,7 @@ def run_create_book(book_id: UUID):
         The Educated Team 
         """
 
-        send_email(book_user.email,"Your Book Has Generated",body, pdf_path=output_pdf)
+        send_email(send_to,"Your Book Has Generated",body, pdf_path=output_pdf)
         db.commit()
         db.refresh(book)  # ✅ CRITICAL
         db.refresh(book_user)
