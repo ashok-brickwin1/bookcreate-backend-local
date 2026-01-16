@@ -246,6 +246,7 @@ def run_create_book(book_id: UUID):
             .filter(BookUser.id == book.book_user_id, BookUser.is_deleted == False)
             .first()
         )
+        logger.info(f"book user found:{book_user.name}, {book_user.email}")
         email=book_user.email
 
         if not book_user:
@@ -290,6 +291,7 @@ def run_create_book(book_id: UUID):
             book_title=str(book.title),
             dedication=str(book.dedication)
         )
+        logger.info(f"sending mail to book user:{book_user.email}")
 
 
         # send email functionality
