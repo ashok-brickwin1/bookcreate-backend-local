@@ -38,7 +38,7 @@ class VisionAnswers(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     question_id = Column(UUID(as_uuid=True), ForeignKey("vision_questions.id"), nullable=False)
     book_user_id = Column(UUID(as_uuid=True), ForeignKey("book_users.id"), nullable=False)
-    text = Column(String(255),nullable=True)
+    text = Column(Text,nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
