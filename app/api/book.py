@@ -576,7 +576,8 @@ def create_book_from_setup(
     except Exception as e:
         logger.info(f"failed to create book setup:{str(e)}")
         return {
-            "success": False
+            "success": False,
+            "message": f"Failed to create book setup :Error {str(e)}"
         }
 
 
@@ -675,7 +676,8 @@ def update_book_from_setup(
     except Exception as e:
         logger.info(f"failed to create book setup:{str(e)}")
         return {
-            "success": False
+            "success": False,
+            "message": f"Failed to update book setup :Error {str(e)}"
         }
     
 
