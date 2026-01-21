@@ -193,7 +193,12 @@ def expand_all_chapters_copy(figure_name,outline):
     expanded_count = 0
     for i, chapter in enumerate(chapters, start=1):
    
-        chapter_title = chapter.get("chapter_title")
+        chapter_title = chapter.get("chapter_title")    
+
+        if i>1:
+            prev_summary=chapters[i-1].get("chapter_summary")
+        else:
+            prev_summary=None
 
         if not chapter_title:
             logger.warning(f"Chapter {i} missing title, skipping")
@@ -217,7 +222,8 @@ def expand_all_chapters_copy(figure_name,outline):
             figure_name=figure_name,
             chapter_title=chapter_title,
             research_files=research_files,
-            chapter=chapter
+            chapter=chapter,
+            prev_summary=prev_summary
         )
 
         if chapter_content:
