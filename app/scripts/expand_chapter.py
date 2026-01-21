@@ -248,7 +248,7 @@ from langchain_openai import ChatOpenAI
 from langchain.chat_models import init_chat_model
 
 
-def expand_chapter_copy(figure_name, chapter_title, research_files,chapter,prev_summary=None):
+def expand_chapter_copy(figure_name, chapter_title, research_files,chapter):
     """Expand a chapter into full manuscript using ChatGPT."""
 
     logger.info("expand chapter copy called")
@@ -258,8 +258,8 @@ def expand_chapter_copy(figure_name, chapter_title, research_files,chapter,prev_
         return None
     
     try:
-        # client = OpenAI(api_key=OPENAI_API_KEY)
-        model = init_chat_model( model="gpt-5.1", api_key=OPENAI_API_KEY, temperature=0.7, max_tokens=1000 )
+        client = OpenAI(api_key=OPENAI_API_KEY)
+        # model = init_chat_model( model="gpt-5.1", api_key=OPENAI_API_KEY, temperature=0.7, max_tokens=1000 )
     except Exception as e:
         logging.error(f"Failed to initialize OpenAI client: {e}")
         return None
@@ -348,14 +348,14 @@ def expand_chapter_copy(figure_name, chapter_title, research_files,chapter,prev_
             if attempt == 1:
                 # First attempt: generate full chapter
                 logger.info("first attempt")
-                # messages = [
-                #     {"role": "system", "content": system_prompt},
-                #     {"role": "user", "content": user_prompt}
-                # ]
                 messages = [
-                    SystemMessage(content=system_prompt),
-                    HumanMessage(content=user_prompt),
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
                 ]
+                # messages = [
+                #     SystemMessage(content=system_prompt),
+                #     HumanMessage(content=user_prompt),
+                # ]
                 max_completion_tokens = 6000
             else:
                 # Subsequent attempts: expand existing chapter
@@ -376,8 +376,7 @@ def expand_chapter_copy(figure_name, chapter_title, research_files,chapter,prev_
 **Current Chapter:**
 {chapter}
 
-**Previous Summary:** 
-{prev_summary}
+
 
 **Research Archive:**
 {full_context}
@@ -413,17 +412,31 @@ You must expand this chapter to reach at least {MIN_WORD_COUNT} words. This is n
 """
                 
                 messages = [
-                        SystemMessage(content=system_prompt),
-                        HumanMessage(content=user_prompt),
-                        AIMessage(content=chapter),
-                        HumanMessage(content=expand_prompt),
-                    ]
+                            {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                    {"role": "assistant", "content": chapter},
+                    {"role": "user", "content": expand_prompt}
+                ]
+
+
+                    
+                
+                
 
                 max_completion_tokens = 16000  # Increased tokens for substantial expansion
             
-            response = model.invoke(messages)
+            # response = model.invoke(messages)
+            completion = client.chat.completions.create(
+                model="gpt-5.1",
+                messages=messages,
+                temperature=0.7,
+                max_completion_tokens=max_completion_tokens
+            )
+
             
-            chapter = response.content.strip()
+            # chapter = response.content.strip()
+            chapter = completion.choices[0].message.content.strip()
+
             word_count = len(chapter.split())
             logger.info(f"Chapter expanded (attempt {attempt}): {word_count} words")
             

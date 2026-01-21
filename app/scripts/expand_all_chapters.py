@@ -222,8 +222,7 @@ def expand_all_chapters_copy(figure_name,outline):
             figure_name=figure_name,
             chapter_title=chapter_title,
             research_files=research_files,
-            chapter=chapter,
-            prev_summary=prev_summary
+            chapter=chapter
         )
 
         if chapter_content:
