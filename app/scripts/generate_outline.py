@@ -195,38 +195,7 @@ def generate_outline_copy(figure_name, research_files, no_of_chapters,context):
 You create comprehensive book outlines in the authentic voice of the subject, using their actual words, 
 frameworks, and perspectives from the research materials provided."""
     
-#     user_prompt = f"""Create a full {no_of_chapters}-chapter book outline for {figure_name} using the research materials below.
 
-# **Structure Required:**
-
-# **Introduction:**
-# - Book Title
-# - Core Focus
-# - Opening Story
-# - 1 Big Ideas
-# - 1 Direct Quotes
-
-# **Chapters 1-{no_of_chapters}:**
-# For each chapter:
-# - Chapter Title
-# - Core Focus (transformational concept)
-# - Opening Story (real moment or case study)
-# - 1 Big Ideas
-# - 1 Direct Quotes
-
-# **Requirements:**
-# - At least 500 words total
-# - Each section must have exactly 1 Big Ideas + 1 Direct Quotes
-# - Absolutely no fabricated quotes or filler
-# - Must feel as if {figure_name} wrote it themselves
-# - If interview transcript exists, prioritize its content for voice, tone, and direct quotes
-# - Use other research files to support and supplement
-
-# **Research Materials:**
-# {full_context}
-
-# **Book Outline:**
-# """
     
     user_prompt = f"""
 You must return ONLY valid JSON.
@@ -249,12 +218,20 @@ Generate a structured book outline in the following EXACT JSON schema:
       "chapter_title": "string",
       "core_focus": "string",
       "opening_story": "string",
-      "big_ideas": {
-          "string","string"
-      },
-      "direct_quotes": {
-          "string","string"
-      }
+      "big_ideas": [
+        "string",
+        "string",
+        "string",
+        "string",
+        "string"
+      ],
+      "direct_quotes": [
+        "string",
+        "string",
+        "string",
+        "string",
+        "string"
+      ]
     }}
   ]
 }}
