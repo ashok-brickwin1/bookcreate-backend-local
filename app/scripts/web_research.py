@@ -277,6 +277,32 @@ def normalize_url(url: str) -> str:
     return f"{parsed.scheme}://{parsed.netloc}{parsed.path}".rstrip("/")
 
 
+from urllib.parse import urlparse
+
+def extract_linkedin_slug(value: str) -> str:
+    """
+    Extract LinkedIn profile slug from a URL or partial input.
+    Examples:
+      linkedin.com/in/shaktiprasad -> shaktiprasad
+      https://www.linkedin.com/in/shakti-prasad-k -> shakti-prasad-k
+    """
+    if not value:
+        return ""
+
+    # Ensure it parses as a URL
+    if not value.startswith("http"):
+        value = "https://" + value
+
+    parsed = urlparse(value)
+
+    parts = parsed.path.strip("/").split("/")
+
+    if len(parts) >= 2 and parts[0] == "in":
+        return parts[1].lower()
+
+    return ""
+
+
 def search_firecrawl(query: str):
     logging.info(f"Searching Firecrawl with query: {query}")
 
@@ -300,16 +326,18 @@ def search_firecrawl(query: str):
 
     web_data = data.get("data", {}).get("web", [])
 
-    canonical_query = canonical_linkedin_url(query)
+    query_slug = extract_linkedin_slug(query)
+    logging.info(f"Extracted query slug: {query_slug}")
 
     filtered = [
         item for item in web_data
-        if canonical_linkedin_url(item.get("url", "")) == canonical_query
+        if extract_linkedin_slug(item.get("url", "")) == query_slug
     ]
 
     logging.info(f"Filtered Firecrawl results: {filtered}")
 
     return filtered
+
 
 
 
@@ -515,7 +543,7 @@ def conduct_research_copy(figure_name, context=None, refresh=True,research_sourc
         f'"{figure_name}" CEO OR founder OR executive',
         f'"{figure_name}" interview OR profile OR feature'
     ]
-    # bio_queries=[]
+    bio_queries=[]
     for source in research_sources:
         bio_queries.append(f"site:{source}")
 
@@ -538,7 +566,7 @@ def conduct_research_copy(figure_name, context=None, refresh=True,research_sourc
         f'"{figure_name}" conference OR summit OR keynote',
         f'"{figure_name}" TV OR television OR news'
     ]
-    # media_queries=[]
+    media_queries=[]
     for source in research_sources:
         media_queries.append(f"site:{source} {figure_name} interview OR talk OR speech OR TV OR television OR news")
     media_content = research_phase(client, figure_name,identity, context, "Media", media_queries)
@@ -552,8 +580,8 @@ def conduct_research_copy(figure_name, context=None, refresh=True,research_sourc
         f'site:patents.google.com "{figure_name}"',
         f'site:medium.com OR site:substack.com "{figure_name}"'
     ]
-    pub_content = research_phase(client, figure_name,identity, context, "Publications", pub_queries)
-    # pub_content=""
+    # pub_content = research_phase(client, figure_name,identity, context, "Publications", pub_queries)
+    pub_content=""
     
     # Phase 4: Quotes
     quote_queries = [
@@ -564,8 +592,8 @@ def conduct_research_copy(figure_name, context=None, refresh=True,research_sourc
         f'"{figure_name}" speech OR presentation OR keynote',
         f'"{figure_name}" quote OR insight OR perspective'
     ]
-    quote_content = research_phase(client, figure_name,identity, context, "Quotes", quote_queries)
-    # quote_content =""
+    # quote_content = research_phase(client, figure_name,identity, context, "Quotes", quote_queries)
+    quote_content =""
     
     # Phase 5: Frameworks
     framework_queries = [
@@ -576,8 +604,8 @@ def conduct_research_copy(figure_name, context=None, refresh=True,research_sourc
         f'"{figure_name}" tool OR technique OR practice',
         f'"{figure_name}" philosophy OR mindset OR thinking'
     ]
-    framework_content = research_phase(client, figure_name,identity, context, "Frameworks", framework_queries)
-    # framework_content =""
+    # framework_content = research_phase(client, figure_name,identity, context, "Frameworks", framework_queries)
+    framework_content =""
     
     # Phase 6: Themes
     theme_queries = [
@@ -588,8 +616,8 @@ def conduct_research_copy(figure_name, context=None, refresh=True,research_sourc
         f'"{figure_name}" concerned OR worried OR focused on',
         f'"{figure_name}" goal OR objective OR aim'
     ]
-    theme_content = research_phase(client, figure_name, identity,context, "Themes", theme_queries)
-    # theme_content =""
+    # theme_content = research_phase(client, figure_name, identity,context, "Themes", theme_queries)
+    theme_content =""
     # Compile dossier
     dossier = f"""# Research Dossier: {figure_name}
 
