@@ -543,7 +543,7 @@ def conduct_research_copy(figure_name, context=None, refresh=True,research_sourc
         f'"{figure_name}" CEO OR founder OR executive',
         f'"{figure_name}" interview OR profile OR feature'
     ]
-    bio_queries=[]
+    # bio_queries=[]
     for source in research_sources:
         bio_queries.append(f"site:{source}")
 
@@ -566,7 +566,7 @@ def conduct_research_copy(figure_name, context=None, refresh=True,research_sourc
         f'"{figure_name}" conference OR summit OR keynote',
         f'"{figure_name}" TV OR television OR news'
     ]
-    media_queries=[]
+    # media_queries=[]
     for source in research_sources:
         media_queries.append(f"site:{source} {figure_name} interview OR talk OR speech OR TV OR television OR news")
     media_content = research_phase(client, figure_name,identity, context, "Media", media_queries)
@@ -580,8 +580,8 @@ def conduct_research_copy(figure_name, context=None, refresh=True,research_sourc
         f'site:patents.google.com "{figure_name}"',
         f'site:medium.com OR site:substack.com "{figure_name}"'
     ]
-    # pub_content = research_phase(client, figure_name,identity, context, "Publications", pub_queries)
-    pub_content=""
+    pub_content = research_phase(client, figure_name,identity, context, "Publications", pub_queries)
+    # pub_content=""
     
     # Phase 4: Quotes
     quote_queries = [
@@ -592,8 +592,8 @@ def conduct_research_copy(figure_name, context=None, refresh=True,research_sourc
         f'"{figure_name}" speech OR presentation OR keynote',
         f'"{figure_name}" quote OR insight OR perspective'
     ]
-    # quote_content = research_phase(client, figure_name,identity, context, "Quotes", quote_queries)
-    quote_content =""
+    quote_content = research_phase(client, figure_name,identity, context, "Quotes", quote_queries)
+    # quote_content =""
     
     # Phase 5: Frameworks
     framework_queries = [
@@ -604,8 +604,8 @@ def conduct_research_copy(figure_name, context=None, refresh=True,research_sourc
         f'"{figure_name}" tool OR technique OR practice',
         f'"{figure_name}" philosophy OR mindset OR thinking'
     ]
-    # framework_content = research_phase(client, figure_name,identity, context, "Frameworks", framework_queries)
-    framework_content =""
+    framework_content = research_phase(client, figure_name,identity, context, "Frameworks", framework_queries)
+    # framework_content =""
     
     # Phase 6: Themes
     theme_queries = [
@@ -616,8 +616,8 @@ def conduct_research_copy(figure_name, context=None, refresh=True,research_sourc
         f'"{figure_name}" concerned OR worried OR focused on',
         f'"{figure_name}" goal OR objective OR aim'
     ]
-    # theme_content = research_phase(client, figure_name, identity,context, "Themes", theme_queries)
-    theme_content =""
+    theme_content = research_phase(client, figure_name, identity,context, "Themes", theme_queries)
+    # theme_content =""
     # Compile dossier
     dossier = f"""# Research Dossier: {figure_name}
 
