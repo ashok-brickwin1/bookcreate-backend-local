@@ -123,7 +123,7 @@ def run_conduct_research_worker(book_id: UUID):
         # ⏳ Simulate research
         # time.sleep(20)
         
-        search_results=conduct_research_copy(figure_name=figure_name,refresh=True,research_sources=research_sources_lst,linkedin=linkedin, twitter=twitter, youtube=youtube)
+        search_results=conduct_research_copy(figure_name=figure_name,refresh=True,research_sources=research_sources_lst,linkedin=linkedin, twitter=twitter, youtube=youtube,name=book_user.name,title=book_user.title,bio=book_user.bio)
 
         
         

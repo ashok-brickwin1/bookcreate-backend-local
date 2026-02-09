@@ -11,6 +11,7 @@ import logging
 from pathlib import Path
 from dotenv import load_dotenv
 from perplexity import Perplexity
+import requests
 
 load_dotenv()
 
@@ -23,27 +24,60 @@ logging.basicConfig(
 )
 
 
-def search_perplexity(client, query, max_results=5):
-    """Search using Perplexity API and return results."""
+def search_perplexity(client, query, identity):
+    """
+    Search using Perplexity API and return results only if they match the target identity.
+    identity = {
+        "name": "...",
+        "title": "...",
+        "description": "...",
+        "url": "..."
+    }
+    """
     try:
+        system_prompt = f"""
+You are a research assistant.
+
+Target person (must match exactly):
+Name: {identity['name']}
+LinkedIn headline: {identity['title']}
+Description: {identity['description']}
+Profile URL: {identity['url']}
+
+Rules:
+1. Only return information that clearly refers to this same or similar individual.
+2. If multiple people share this name, discard unrelated ones.
+3. Verify using role, industry, and description.
+4. If identity cannot be confirmed, reply exactly with: IDENTITY_NOT_CONFIRMED.
+5. Do NOT mix data from different people.
+
+
+"""
+
         completion = client.chat.completions.create(
             model="sonar-pro",
             messages=[
-                {
-                    "role": "user",
-                    "content": query
-                }
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": query}
             ],
             max_tokens=2000,
             temperature=0.1
         )
-        return completion.choices[0].message.content
+
+        result = completion.choices[0].message.content
+        logging.info(f"SYSTEM PROMPT {system_prompt} RESULT DATA {result}")
+        # Optional guard
+        if "IDENTITY_NOT_CONFIRMED" in result:
+            return ""
+
+        return result
+
     except Exception as e:
         logging.error(f"Perplexity search failed for query '{query}': {e}")
         return None
 
 
-def research_phase(client, figure_name, context=None, phase_name="", search_queries=None):
+def research_phase(client, figure_name,identity, context=None, phase_name="", search_queries=None):
     """Conduct a research phase with multiple search queries."""
     if not search_queries:
         return ""
@@ -55,7 +89,7 @@ def research_phase(client, figure_name, context=None, phase_name="", search_quer
         query = query_template.format(figure=figure_name, context=context or "")
        
         logging.info(f"  Query {i}/{len(search_queries)}: {query}...")
-        result = search_perplexity(client, query)
+        result = search_perplexity(client, query,identity)
         # save to research data columns 
         if result:
             results.append(f"### Search {i}: {query}\n\n{result}\n\n")
@@ -217,27 +251,41 @@ def conduct_research(figure_name, context=None, refresh=False,research_sources=N
 
 
 
+from urllib.parse import urlparse
 
-def search_firecrawl(query:str):
-    import requests
+def canonical_linkedin_url(url: str) -> str:
+    """
+    Normalize LinkedIn profile URLs so regional domains match.
+    """
+    if not url:
+        return ""
+
+    parsed = urlparse(url)
+
+    # Force canonical domain
+    domain = "linkedin.com"
+
+    # Keep only path (e.g. /in/jharna-agrawal)
+    path = parsed.path.rstrip("/")
+
+    return f"https://{domain}{path}"
+
+from urllib.parse import urlparse
+
+def normalize_url(url: str) -> str:
+    parsed = urlparse(url)
+    return f"{parsed.scheme}://{parsed.netloc}{parsed.path}".rstrip("/")
+
+
+def search_firecrawl(query: str):
+    logging.info(f"Searching Firecrawl with query: {query}")
 
     url = "https://api.firecrawl.dev/v2/search"
 
     payload = {
-    "query": query,
-    "sources": [
-        "web"
-    ],
-    "categories": [],
-    "limit": 1,
-    "scrapeOptions": {
-        "onlyMainContent": False,
-        "maxAge": 172800000,
-        "parsers": [
-        "pdf"
-        ],
-        "formats": []
-    }
+        "query": query,
+        "sources": ["web"],
+        "limit": 5
     }
 
     headers = {
@@ -246,10 +294,22 @@ def search_firecrawl(query:str):
     }
 
     response = requests.post(url, json=payload, headers=headers)
-    web_data = response.json()["data"]["web"]
+    data = response.json()
 
+    logging.info(f"full firecrawl response:{data}")
 
-    return web_data
+    web_data = data.get("data", {}).get("web", [])
+
+    canonical_query = canonical_linkedin_url(query)
+
+    filtered = [
+        item for item in web_data
+        if canonical_linkedin_url(item.get("url", "")) == canonical_query
+    ]
+
+    logging.info(f"Filtered Firecrawl results: {filtered}")
+
+    return filtered
 
 
 
@@ -346,7 +406,7 @@ def extract_identity_clues_from_firecrawl(firecrawl_raw):
 
 
 
-def conduct_research_copy(figure_name, context=None, refresh=True,research_sources=None, linkedin=None,twitter=None, youtube=None):
+def conduct_research_copy(figure_name, context=None, refresh=True,research_sources=None, linkedin=None,twitter=None, youtube=None, name=None,title=None,bio=None):
     """Conduct comprehensive web research on a public figure."""
     if not PERPLEXITY_API_KEY:
         logging.error("PERPLEXITY_API_KEY not set. Cannot conduct web research.")
@@ -373,9 +433,9 @@ def conduct_research_copy(figure_name, context=None, refresh=True,research_sourc
     
     
     # Phase 1: Identity & Biography
-    linkedin_site = f"site:{linkedin} '{figure_name}'" if linkedin else f'site:linkedin.com "{figure_name}"'
+    linkedin_site = f"{linkedin} {figure_name}" if linkedin else f'site:linkedin.com "{figure_name}"'
 
-    twitter_site = f"site:{twitter} '{figure_name}'" if twitter else f'site:x.com "{figure_name}"'
+    twitter_site = f"{twitter} {figure_name}" if twitter else f'site:x.com "{figure_name}"'
 
 
     firecrawl_sections = []
@@ -384,7 +444,7 @@ def conduct_research_copy(figure_name, context=None, refresh=True,research_sourc
     if linkedin:
         try:
 
-            fc_data = search_firecrawl(query=linkedin_site)
+            fc_data = search_firecrawl(query=linkedin)
             firecrawl_raw.extend(fc_data)
             logging.info(f"linkedin firecrawl data:{fc_data}")
             firecrawl_sections.append(
@@ -398,7 +458,7 @@ def conduct_research_copy(figure_name, context=None, refresh=True,research_sourc
 
         try:
 
-            fc_data = search_firecrawl(query=twitter_site)
+            fc_data = search_firecrawl(query=twitter)
             firecrawl_raw.extend(fc_data)
             logging.info(f"twitter firecrawl data:{fc_data}")
             firecrawl_sections.append(
@@ -407,7 +467,44 @@ def conduct_research_copy(figure_name, context=None, refresh=True,research_sourc
         except Exception as e:
             logging.info(f"error at search crawl:{str(e)}")
 
+    
+
+    try:
+        for source in research_sources:
+            fc_data = search_firecrawl(query=source)
+            firecrawl_raw.extend(fc_data)
+            logging.info(f"{source} firecrawl data:{fc_data}")
+            firecrawl_sections.append(
+                format_firecrawl_results(fc_data, source_label=source)
+            )
+
+    
+    except Exception as e:
+        logging.info(f"error at search crawl:{str(e)}")
+
+
+    
+
     firecrawl_content = "\n".join(firecrawl_sections)
+    if len(firecrawl_raw)>0:
+        identity = {
+        "name": figure_name,
+        "title": firecrawl_raw[0]["title"],
+        "description": firecrawl_raw[0]["description"],
+        "url": firecrawl_raw[0]["url"]
+        }
+    
+    else:
+        identity = {
+        "name": name,
+        "title": title,
+        "description": bio,
+        "url": ""
+        }
+
+    
+    logging.info(f"Identity created:{identity}")
+
 
     bio_queries = [
         linkedin_site,
@@ -422,76 +519,77 @@ def conduct_research_copy(figure_name, context=None, refresh=True,research_sourc
     for source in research_sources:
         bio_queries.append(f"site:{source}")
 
-    bio_content = research_phase(client, figure_name, context, "Biography", bio_queries)
-
+    bio_content = research_phase(client, figure_name,identity, context, "Biography", bio_queries)
+  
     
     # Phase 2: Media Sweep
+    # identity_clues = extract_identity_clues_from_firecrawl(firecrawl_raw)
+    # identity_clause = build_identity_clause(figure_name, identity_clues)
 
-    youtube_site = f"site:{youtube} '{figure_name}'" if youtube else f'site:youtube.com "{figure_name} and {identity_clause}" interview OR talk OR speech'
-    identity_clues = extract_identity_clues_from_firecrawl(firecrawl_raw)
-    identity_clause = build_identity_clause(figure_name, identity_clues)
+    youtube_site = f"site:{youtube} '{figure_name}'" if youtube else f'site:youtube.com "{figure_name}" interview OR talk OR speech'
+    
 
 
     media_queries = [
         youtube_site,
         f'site:spotify.com OR site:apple.com/podcasts "{figure_name}"',
-        f'"{figure_name} and {identity_clause}" video OR webinar OR presentation',
-        f'"{figure_name} and {identity_clause}" interview OR conversation OR discussion',
-        f'"{figure_name} and {identity_clause}" conference OR summit OR keynote',
-        f'"{figure_name} and {identity_clause}" TV OR television OR news'
+        f'"{figure_name}" video OR webinar OR presentation',
+        f'"{figure_name}" interview OR conversation OR discussion',
+        f'"{figure_name}" conference OR summit OR keynote',
+        f'"{figure_name}" TV OR television OR news'
     ]
     # media_queries=[]
     for source in research_sources:
         media_queries.append(f"site:{source} {figure_name} interview OR talk OR speech OR TV OR television OR news")
-    media_content = research_phase(client, figure_name, context, "Media", media_queries)
+    media_content = research_phase(client, figure_name,identity, context, "Media", media_queries)
     
     # Phase 3: Publications
     pub_queries = [
-        f'"{figure_name} and {identity_clause}" book OR author OR published',
-        f'"{figure_name} and {identity_clause}" article OR blog OR writing',
-        f'"{figure_name} and {identity_clause}" research OR study OR paper',
-        f'"{figure_name} and {identity_clause}" whitepaper OR report OR analysis',
-        f'site:patents.google.com "{figure_name} and {identity_clause}"',
-        f'site:medium.com OR site:substack.com "{figure_name} and {identity_clause}"'
+        f'"{figure_name}" book OR author OR published',
+        f'"{figure_name}" article OR blog OR writing',
+        f'"{figure_name}" research OR study OR paper',
+        f'"{figure_name}" whitepaper OR report OR analysis',
+        f'site:patents.google.com "{figure_name}"',
+        f'site:medium.com OR site:substack.com "{figure_name}"'
     ]
-    pub_content = research_phase(client, figure_name, context, "Publications", pub_queries)
+    pub_content = research_phase(client, figure_name,identity, context, "Publications", pub_queries)
     # pub_content=""
     
     # Phase 4: Quotes
     quote_queries = [
-        f'"{figure_name} and {identity_clause}" quotes OR sayings OR wisdom',
-        f'"{figure_name} and {identity_clause}" said OR stated OR mentioned',
+        f'"{figure_name} " quotes OR sayings OR wisdom',
+        f'"{figure_name}" said OR stated OR mentioned',
         twitter_site+" quotes OR sayings OR wisdom",
         linkedin_site+" quotes OR sayings OR wisdom",
-        f'"{figure_name} and {identity_clause}" speech OR presentation OR keynote',
-        f'"{figure_name} and {identity_clause}" quote OR insight OR perspective'
+        f'"{figure_name}" speech OR presentation OR keynote',
+        f'"{figure_name}" quote OR insight OR perspective'
     ]
-    quote_content = research_phase(client, figure_name, context, "Quotes", quote_queries)
+    quote_content = research_phase(client, figure_name,identity, context, "Quotes", quote_queries)
     # quote_content =""
     
     # Phase 5: Frameworks
     framework_queries = [
-        f'"{figure_name} and {identity_clause}" framework OR model OR methodology',
-        f'"{figure_name} and {identity_clause}" process OR system OR approach',
-        f'"{figure_name} and {identity_clause}" strategy OR method OR technique',
-        f'"{figure_name} and {identity_clause}" concept OR theory OR principle',
-        f'"{figure_name} and {identity_clause}" tool OR technique OR practice',
-        f'"{figure_name} and {identity_clause}" philosophy OR mindset OR thinking'
+        f'"{figure_name}" framework OR model OR methodology',
+        f'"{figure_name}" process OR system OR approach',
+        f'"{figure_name}" strategy OR method OR technique',
+        f'"{figure_name}" concept OR theory OR principle',
+        f'"{figure_name}" tool OR technique OR practice',
+        f'"{figure_name}" philosophy OR mindset OR thinking'
     ]
-    framework_content = research_phase(client, figure_name, context, "Frameworks", framework_queries)
+    framework_content = research_phase(client, figure_name,identity, context, "Frameworks", framework_queries)
     # framework_content =""
     
     # Phase 6: Themes
     theme_queries = [
-        f'"{figure_name} and {identity_clause}" values OR beliefs OR principles',
-        f'"{figure_name} and {identity_clause}" mission OR purpose OR vision',
-        f'"{figure_name} and {identity_clause}" philosophy OR worldview OR perspective',
-        f'"{figure_name} and {identity_clause}" passionate OR interested OR focused',
-        f'"{figure_name} and {identity_clause}" concerned OR worried OR focused on',
-        f'"{figure_name} and {identity_clause}" goal OR objective OR aim'
+        f'"{figure_name}" values OR beliefs OR principles',
+        f'"{figure_name}" mission OR purpose OR vision',
+        f'"{figure_name}" philosophy OR worldview OR perspective',
+        f'"{figure_name}" passionate OR interested OR focused',
+        f'"{figure_name}" concerned OR worried OR focused on',
+        f'"{figure_name}" goal OR objective OR aim'
     ]
-    theme_content = research_phase(client, figure_name, context, "Themes", theme_queries)
-    
+    theme_content = research_phase(client, figure_name, identity,context, "Themes", theme_queries)
+    # theme_content =""
     # Compile dossier
     dossier = f"""# Research Dossier: {figure_name}
 
@@ -546,6 +644,9 @@ def conduct_research_copy(figure_name, context=None, refresh=True,research_sourc
         "dossier_path":str(dossier_path)
     }
     # return str(dossier_path)
+
+
+
 
 
 def main():
